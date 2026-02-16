@@ -1,0 +1,1447 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+  <title>Chords (Piano)</title>
+
+  <!-- App icon (change easily: replace emoji + color in SVG) -->
+  <link rel="icon" href='data:image/svg+xml;utf8,
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+    <defs>
+      <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="%23007aff"/>
+        <stop offset="1" stop-color="%23004fb3"/>
+      </linearGradient>
+    </defs>
+    <rect rx="28" ry="28" width="128" height="128" fill="url(%23g)"/>
+    <text x="64" y="82" font-size="64" text-anchor="middle" fill="white" font-family="system-ui">🎹</text>
+  </svg>'/>
+  <link rel="apple-touch-icon" href='data:image/svg+xml;utf8,
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180">
+    <defs>
+      <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="%23007aff"/>
+        <stop offset="1" stop-color="%23004fb3"/>
+      </linearGradient>
+    </defs>
+    <rect rx="44" ry="44" width="180" height="180" fill="url(%23g)"/>
+    <text x="90" y="118" font-size="84" text-anchor="middle" fill="white" font-family="system-ui">🎹</text>
+  </svg>'/>
+
+  <style>
+    :root{
+      --bg:#f2f3f5;
+      --card:#ffffff;
+      --card2:#ffffff;
+      --txt:#0f172a;
+      --mut:#6b7280;
+      --line:#e5e7eb;
+
+      --bubble:#f7c948;
+      --bubbleText:#1a1a1a;
+
+      --whiteKey:#ffffff;
+      --whiteKeyBorder:#cfd5df;
+      --blackKey:#111827;
+      --blackKeyBorder:#0b1220;
+
+      --shadow:0 10px 24px rgba(15, 23, 42, .08);
+      --iosBlue:#007aff;
+
+      --segBg:#e5e7eb;
+      --segChip:#ffffff;
+    }
+
+    [data-theme="dark"]{
+      --bg:#0b0c10;
+      --card:#12141b;
+      --card2:#0f1117;
+      --txt:#eaeefb;
+      --mut:#aab3cc;
+      --line:#2a2f3b;
+
+      --whiteKey:#f3f4f6;
+      --whiteKeyBorder:#374151;
+
+      --shadow:0 18px 40px rgba(0,0,0,.35);
+
+      --segBg:#2a2f3b;
+      --segChip:#12141b;
+    }
+
+    *{box-sizing:border-box}
+    body{margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; background:var(--bg); color:var(--txt);}
+
+    .app{
+      max-width:1200px; margin:0 auto; padding:14px;
+      display:grid; grid-template-columns: 360px 1fr; gap:12px;
+    }
+    @media(max-width:980px){ .app{ grid-template-columns:1fr; } }
+
+    .panel{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:16px;
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+
+    /* top bar */
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:10px 12px; border-bottom:1px solid var(--line);
+      background:var(--card2);
+    }
+    .topbar .leftGroup{display:flex; gap:10px; align-items:center;}
+
+    .iconBtn{
+      width:34px; height:34px; border-radius:10px;
+      border:1px solid var(--line);
+      background:transparent;
+      display:grid; place-items:center;
+      cursor:pointer;
+      user-select:none;
+      font-weight:900;
+    }
+
+    .tabs{
+      display:inline-flex; border:1px solid var(--line);
+      background:var(--card2);
+      border-radius:12px; overflow:hidden;
+    }
+    .tabs button{
+      border:0; background:transparent; color:var(--mut);
+      padding:7px 12px; font-weight:900; font-size:14px; cursor:pointer;
+    }
+    .tabs button.active{
+      background:rgba(0,0,0,.04);
+      color:var(--txt);
+    }
+    [data-theme="dark"] .tabs button.active{ background:rgba(255,255,255,.06); }
+
+    .starBtn{
+      font-size:22px; font-weight:900;
+      border:0; background:transparent; cursor:pointer;
+      color:var(--iosBlue);
+      padding:6px 8px;
+      user-select:none;
+    }
+
+    /* LEFT */
+    .left{ display:flex; flex-direction:column; height:min(860px, calc(100vh - 28px)); }
+    .hdr{
+      padding:12px 12px 6px;
+      font-size:44px; font-weight:900; letter-spacing:-.02em;
+    }
+    .searchWrap{ padding:8px 12px 10px; }
+    .search{
+      width:100%;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:transparent;
+      color:var(--txt);
+      font-size:15px;
+      outline:none;
+    }
+
+    .rootRow{
+      display:flex; gap:14px; padding:8px 12px 0; align-items:center;
+      font-size:34px; font-weight:900;
+    }
+    .rootRow small{ font-size:16px; color:var(--mut); font-weight:800; }
+
+    .invMiniSeg{
+      padding:8px 12px 10px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+
+    .miniSeg{
+      display:inline-flex; gap:0;
+      border:1px solid var(--line);
+      border-radius:12px;
+      overflow:hidden;
+      background:var(--card2);
+    }
+    .miniSeg button{
+      border:0; border-right:1px solid var(--line);
+      background:transparent;
+      padding:6px 10px;
+      font-weight:900;
+      color:var(--mut);
+      cursor:pointer;
+      font-size:12px;
+    }
+    .miniSeg button:last-child{border-right:0}
+    .miniSeg button.active{ background:rgba(0,0,0,.04); color:var(--txt); }
+    [data-theme="dark"] .miniSeg button.active{ background:rgba(255,255,255,.06); }
+
+    .favToggle{
+      color:var(--iosBlue);
+      font-weight:900;
+      cursor:pointer;
+      user-select:none;
+      font-size:13px;
+      white-space:nowrap;
+    }
+
+    .list{ overflow:auto; padding:6px 0; flex:1; }
+    .item{
+      display:flex; align-items:center; gap:10px;
+      padding:10px 12px;
+      cursor:pointer;
+      border-left:4px solid transparent;
+    }
+    .item:hover{ background:rgba(0,0,0,.03); }
+    [data-theme="dark"] .item:hover{ background:rgba(255,255,255,.04); }
+    .item.active{ background:rgba(0,122,255,.10); border-left-color:var(--iosBlue); }
+    .item .name{ min-width:70px; font-weight:900; font-size:18px; }
+    .item .sub{ color:var(--mut); font-size:12px; font-weight:800; margin-top:2px;}
+    .miniKbd{ flex:1; min-width:160px; }
+
+    .filterBtn{
+      padding:10px 12px;
+      border-top:1px solid var(--line);
+      color:var(--iosBlue);
+      font-weight:900;
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+
+    /* RIGHT */
+    .right{ display:flex; flex-direction:column; min-height:min(860px, calc(100vh - 28px)); }
+    .bigChordTitle{
+      text-align:center;
+      font-size:28px;
+      font-weight:900;
+      padding:14px 0 8px;
+      color:rgba(15,23,42,.55);
+    }
+    [data-theme="dark"] .bigChordTitle{ color:rgba(234,238,251,.55); }
+
+    .pickerBlock{ padding:0 12px 10px; }
+    .rowPicker{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      border-top:1px solid var(--line);
+      padding:10px 0;
+    }
+    .leftArrow, .rightArrow{
+      color:var(--iosBlue);
+      font-weight:900;
+      font-size:22px;
+      padding:4px 8px;
+      cursor:pointer;
+      user-select:none;
+    }
+    .noteRail{
+      display:flex; gap:18px; align-items:center; justify-content:center; flex:1;
+      font-size:20px; font-weight:900;
+    }
+    .noteRail span{ color:rgba(15,23,42,.35); }
+    [data-theme="dark"] .noteRail span{ color:rgba(234,238,251,.35); }
+    .noteRail span.active{ color:var(--txt); }
+
+    .qualRail{
+      display:flex; align-items:center; justify-content:center; flex:1;
+      font-size:18px; font-weight:900;
+    }
+    .qualRail span{ color:var(--txt); }
+    .qualRail .mut{ color:rgba(15,23,42,.35); font-weight:800; }
+    [data-theme="dark"] .qualRail .mut{ color:rgba(234,238,251,.35); }
+
+    .sectionTitle{
+      padding:12px 12px 8px;
+      font-size:18px;
+      font-weight:900;
+      color:rgba(15,23,42,.45);
+    }
+    [data-theme="dark"] .sectionTitle{ color:rgba(234,238,251,.45); }
+
+    .invBar{
+      padding:0 12px 10px;
+      display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;
+    }
+
+    .staffBox{
+      margin:0 12px 12px;
+      border-top:1px solid var(--line);
+      padding-top:10px;
+    }
+    .staffSvg{ width:100%; height:120px; display:block; }
+
+    .infoTable{
+      margin:0 12px 12px;
+      border-top:1px solid var(--line);
+    }
+    .infoRow{
+      display:flex; justify-content:space-between; gap:10px;
+      padding:12px 0;
+      border-bottom:1px solid var(--line);
+    }
+    .infoRow .k{ color:rgba(15,23,42,.55); font-weight:900; }
+    [data-theme="dark"] .infoRow .k{ color:rgba(234,238,251,.55); }
+    .infoRow .v{ font-weight:900; color:rgba(15,23,42,.45); }
+    [data-theme="dark"] .infoRow .v{ color:rgba(234,238,251,.55); }
+
+    .octRow{
+      display:flex; justify-content:space-between; align-items:center;
+      padding:12px 0;
+      border-bottom:1px solid var(--line);
+    }
+
+    .toggle{
+      width:52px; height:30px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      position:relative;
+      background:rgba(0,0,0,.05);
+      cursor:pointer;
+      user-select:none;
+    }
+    [data-theme="dark"] .toggle{ background:rgba(255,255,255,.08); }
+    .toggle .knob{
+      position:absolute; top:3px; left:3px;
+      width:24px; height:24px; border-radius:50%;
+      background:var(--card);
+      box-shadow:0 4px 10px rgba(0,0,0,.12);
+      transition:.2s;
+    }
+    .toggle.on{ background:rgba(0,122,255,.25); border-color:rgba(0,122,255,.45); }
+    .toggle.on .knob{ left:25px; }
+
+    /* MAIN keyboard + bar */
+    .kbdArea{
+      margin-top:auto;
+      border-top:1px solid var(--line);
+      background:var(--card2);
+    }
+    .kbdMain{
+      padding:0;
+      height:260px;
+      overflow:hidden;
+    }
+    .kbdMain svg{ width:100%; height:100%; display:block; }
+
+    .kbdBar{
+      border-top:1px solid var(--line);
+      background:rgba(0,0,0,.03);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:12px 14px;
+      gap:12px;
+    }
+    [data-theme="dark"] .kbdBar{ background:rgba(255,255,255,.04); }
+
+    .playBig{
+      width:56px; height:56px;
+      border-radius:14px;
+      border:0;
+      background:transparent;
+      color:var(--iosBlue);
+      font-size:30px;
+      cursor:pointer;
+      display:grid; place-items:center;
+      user-select:none;
+    }
+
+    .segIOS{
+      background:var(--segBg);
+      border-radius:14px;
+      padding:4px;
+      display:inline-flex;
+      gap:4px;
+      align-items:center;
+      min-width:360px;
+      justify-content:center;
+    }
+    .segIOS button{
+      border:0;
+      background:transparent;
+      padding:10px 14px;
+      border-radius:12px;
+      font-weight:900;
+      cursor:pointer;
+      color:rgba(15,23,42,.65);
+      user-select:none;
+    }
+    [data-theme="dark"] .segIOS button{ color:rgba(234,238,251,.75); }
+    .segIOS button.active{
+      background:var(--segChip);
+      color:var(--txt);
+      box-shadow:0 6px 18px rgba(0,0,0,.08);
+    }
+
+    .dots{
+      color:var(--iosBlue);
+      font-size:22px;
+      font-weight:900;
+      letter-spacing:6px;
+      padding-right:10px;
+      user-select:none;
+    }
+
+    .err{ color:#b91c1c; font-weight:900; text-align:center; padding:8px 12px; display:none; }
+    [data-theme="dark"] .err{ color:#ff8a8a; }
+
+    /* view modes */
+    .viewHide{ display:none !important; }
+  </style>
+</head>
+
+<body data-theme="light">
+  <div class="app">
+
+    <!-- LEFT -->
+    <div class="panel left">
+      <div class="topbar">
+        <div class="leftGroup">
+          <button class="iconBtn" id="themeBtn" title="Toggle theme">☀︎</button>
+          <div class="tabs" id="topTabs">
+            <button class="active" data-tab="root">Root</button>
+            <button data-tab="piano">Piano</button>
+            <button data-tab="staff">Staff</button>
+          </div>
+        </div>
+        <button class="starBtn" id="favBtn" title="Favorite">☆</button>
+      </div>
+
+      <div class="hdr">Chords</div>
+
+      <div class="searchWrap">
+        <input class="search" id="searchInput" placeholder="Search Chords (legacy or modern)"/>
+      </div>
+
+      <div class="rootRow">
+        <div id="leftRootBig">C</div>
+        <small id="leftRootRail">C#  Db  D  D#  Eb</small>
+      </div>
+
+      <div class="invMiniSeg">
+        <div class="miniSeg" id="leftInvSeg">
+          <button class="active" data-inv="0">Root</button>
+          <button data-inv="1">1st</button>
+          <button data-inv="2">2nd</button>
+          <button data-inv="3">3rd</button>
+          <button data-inv="4">4th</button>
+          <button data-inv="5">5th</button>
+          <button data-inv="6">6th</button>
+        </div>
+        <div class="favToggle" id="favFilterBtn">Show ★</div>
+      </div>
+
+      <div class="list" id="chordList"></div>
+
+      <div class="filterBtn">☰ <span>Filter Chords</span></div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="panel right">
+      <div class="bigChordTitle" id="rightTitle">Cm</div>
+
+      <div class="pickerBlock" id="pickerBlock">
+        <div class="rowPicker">
+          <div class="leftArrow" id="rootPrev">‹</div>
+          <div class="noteRail" id="noteRail"></div>
+          <div class="rightArrow" id="rootNext">›</div>
+        </div>
+
+        <div class="rowPicker">
+          <div class="leftArrow" id="qualPrev">‹</div>
+          <div class="qualRail" id="qualRail"></div>
+          <div class="rightArrow" id="qualNext">›</div>
+        </div>
+      </div>
+
+      <div id="rootView">
+        <div class="sectionTitle">Inversion</div>
+        <div class="invBar">
+          <div class="miniSeg" id="rightInvSeg"></div>
+          <div style="color:var(--mut);font-weight:900;font-size:12px" id="legacyLine">—</div>
+        </div>
+
+        <div class="staffBox" id="staffBox">
+          <svg class="staffSvg" id="staffSvg" viewBox="0 0 800 140" xmlns="http://www.w3.org/2000/svg"></svg>
+        </div>
+
+        <div class="infoTable" id="infoTable">
+          <div class="infoRow">
+            <div class="k">Degrees</div>
+            <div class="v" id="degText">—</div>
+          </div>
+          <div class="infoRow">
+            <div class="k">Notes</div>
+            <div class="v" id="noteText">—</div>
+          </div>
+          <div class="infoRow">
+            <div class="k">Octave</div>
+            <div class="v">
+              <div class="miniSeg" id="octSeg">
+                <button data-oct="2">C2</button>
+                <button class="active" data-oct="3">C3</button>
+                <button data-oct="4">C4</button>
+                <button data-oct="5">C5</button>
+              </div>
+            </div>
+          </div>
+          <div class="octRow">
+            <div class="k" style="font-weight:900;color:rgba(15,23,42,.55)">Loop</div>
+            <div class="toggle" id="loopToggle"><div class="knob"></div></div>
+          </div>
+        </div>
+
+        <div class="err" id="err"></div>
+      </div>
+
+      <div class="kbdArea" id="pianoView">
+        <div class="kbdMain" id="kbdMain"></div>
+
+        <div class="kbdBar">
+          <button class="playBig" id="playBtn">▶</button>
+
+          <div class="segIOS" id="arpSeg">
+            <button class="active" data-arp="off">At Once</button>
+            <button data-arp="asc">Ascending</button>
+            <button data-arp="desc">Descending</button>
+          </div>
+
+          <div class="dots">•••</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+<script>
+/* ================= Notes / pitch classes ================= */
+const NOTE_SHARP = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+const NOTE_FLAT  = ["C","Db","D","Eb","E","F","Gb","G","Ab","A","Bb","B"];
+const FLAT_TO_SHARP = {"Db":"C#","Eb":"D#","Gb":"F#","Ab":"G#","Bb":"A#"};
+const ROOTS_RAIL = ["C","C#","Db","D","D#","Eb","E","F","F#","Gb","G","G#","Ab","A","A#","Bb","B"];
+
+function toPc(note){ return NOTE_SHARP.indexOf(note); }
+function pcName(pc, preferFlats=false){
+  pc = ((pc%12)+12)%12;
+  return preferFlats ? NOTE_FLAT[pc] : NOTE_SHARP[pc];
+}
+function normRoot(s){
+  const m = s.match(/^([A-Ga-g])([#b]?)/);
+  if(!m) return null;
+  let r = m[1].toUpperCase() + (m[2]||"");
+  if(FLAT_TO_SHARP[r]) r = FLAT_TO_SHARP[r];
+  if(!NOTE_SHARP.includes(r)) return null;
+  return r;
+}
+function uniq(a){ return [...new Set(a)]; }
+
+/* ================= Legacy normalization ================= */
+function normalizeLegacyNotation(raw){
+  let s = (raw||"").trim();
+  if(!s) return s;
+  s = s.replace(/\s+/g,"");
+  if(!s.includes("/")) return s;
+
+  const parts = s.split("/").filter(Boolean);
+  if(parts.length===2 && normRoot(parts[1])) return s; // real slash chord
+
+  const base = parts[0];
+  let tokens = parts.slice(1);
+
+  let bass = null;
+  if(tokens.length && normRoot(tokens[tokens.length-1])){
+    bass = tokens.pop();
+  }
+
+  let addStr = "";
+  for(const t of tokens){
+    if(/^(7|6|9|11|13)$/.test(t)){ addStr += t; continue; }
+    const m = t.match(/^(5|9|11|13)([+-])$/);
+    if(m){
+      const deg=m[1], pm=m[2];
+      addStr += (pm==="+" ? "#" : "b") + deg;
+      continue;
+    }
+    addStr += t;
+  }
+
+  let out = base + addStr;
+  if(bass) out += "/" + bass;
+  return out;
+}
+function modernToLegacy(s){
+  const parts = s.split("/");
+  const main = parts[0];
+  const bass = parts.length>1 ? "/" + parts.slice(1).join("/") : "";
+  const out = main.replace(/([b#])(5|9|11|13)/g, (_, bsh, deg) => "/" + deg + (bsh==="#"?"+":"-"));
+  return out + bass;
+}
+
+/* ================= Chord build ================= */
+function baseTriad(quality){
+  switch(quality){
+    case "min": return [0,3,7];
+    case "dim": return [0,3,6];
+    case "aug": return [0,4,8];
+    case "sus2": return [0,2,7];
+    case "sus4": return [0,5,7];
+    default: return [0,4,7];
+  }
+}
+function addIfMissing(ints,x){ if(!ints.includes(x)) ints.push(x); }
+function removeInterval(ints,x){ const i=ints.indexOf(x); if(i>=0) ints.splice(i,1); }
+
+function applyAlterations(ints, alts){
+  const degToInt = (deg)=> deg===9?14 : deg===11?17 : deg===13?21 : null;
+  for(const a of alts){
+    if(a.deg===5){
+      removeInterval(ints,7); removeInterval(ints,6); removeInterval(ints,8);
+      addIfMissing(ints, 7 + a.delta);
+      continue;
+    }
+    const base = degToInt(a.deg);
+    if(base==null) continue;
+    removeInterval(ints, base);
+    addIfMissing(ints, base + a.delta);
+  }
+}
+
+function parseChord(inputRaw){
+  const legacyInput = (inputRaw||"").trim();
+  if(!legacyInput) return {error:"Empty input"};
+
+  const normalized = normalizeLegacyNotation(legacyInput)
+    .replace(/Δ/gi,"maj")
+    .replace(/7\+/gi,"maj7")
+    .replace(/ø/gi,"m7b5")
+    .replace(/°/g,"dim");
+
+  let s = normalized;
+
+  let bass=null;
+  if(s.includes("/")){
+    const parts=s.split("/");
+    s=parts[0].trim();
+    bass=normRoot(parts[1].trim());
+    if(!bass) return {error:"Invalid slash bass note"};
+  }
+
+  const root = normRoot(s);
+  if(!root) return {error:"Invalid root"};
+  let tail = s.slice(root.length);
+
+  let quality="maj";
+  if(/^m(?!aj)/i.test(tail)){ quality="min"; tail=tail.replace(/^m(?!aj)/i,""); }
+  if(/^min/i.test(tail)){ quality="min"; tail=tail.replace(/^min/i,""); }
+  if(/^maj/i.test(tail)){ quality="maj"; tail=tail.replace(/^maj/i,""); }
+  if(/^dim/i.test(tail)){ quality="dim"; tail=tail.replace(/^dim/i,""); }
+  if(/^aug/i.test(tail) || /^\+/i.test(tail)){ quality="aug"; tail=tail.replace(/^aug/i,"").replace(/^\+/i,""); }
+  if(/^sus2/i.test(tail)){ quality="sus2"; tail=tail.replace(/^sus2/i,""); }
+  if(/^sus4/i.test(tail) || /^sus/i.test(tail)){ quality="sus4"; tail=tail.replace(/^sus4/i,"").replace(/^sus/i,""); }
+
+  let want7=false, maj7=false, dim7=false;
+  let want6=false, want9=false, want11=false, want13=false;
+  let halfDim=false, mMaj7=false;
+
+  if(/m7b5/i.test(s)) halfDim=true;
+  if(/dim7/i.test(s) || /o7/i.test(s)) dim7=true;
+  if(/mMaj7/i.test(s) || /mmaj7/i.test(s)) mMaj7=true;
+
+  if(/13/.test(tail)) want13=true;
+  else if(/11/.test(tail)) want11=true;
+  else if(/9/.test(tail)) want9=true;
+
+  if(/maj7/i.test(tail)) { maj7=true; want7=true; tail=tail.replace(/maj7/ig,""); }
+  if(/m7b5/i.test(tail)) { halfDim=true; want7=true; tail=tail.replace(/m7b5/ig,""); }
+  if(/dim7/i.test(tail)) { dim7=true; want7=true; tail=tail.replace(/dim7/ig,""); }
+  if(/mMaj7|mmaj7/i.test(tail)) { mMaj7=true; want7=true; tail=tail.replace(/mMaj7|mmaj7/ig,""); }
+  if(/7/.test(tail)) { want7=true; tail=tail.replace(/7/ig,""); }
+  if(/69/.test(tail)) { want6=true; want9=true; tail=tail.replace(/69/ig,""); }
+  if(/6/.test(tail)) { want6=true; tail=tail.replace(/6/ig,""); }
+
+  const alts=[];
+  const altRe=/([b#])(5|9|11|13)/ig; let m;
+  while((m=altRe.exec(normalized))!==null){
+    alts.push({deg:parseInt(m[2],10), delta:(m[1]==="b"?-1:+1)});
+  }
+
+  const preferFlats = /b/.test(normalized) && !/#/.test(normalized);
+  return {root,bass,quality,want7,maj7,dim7,want6,want9,want11,want13,halfDim,mMaj7,alts,preferFlats,legacyInput,normalizedInput:normalized};
+}
+
+function normalizeDisplayName(p){
+  let name=p.root;
+
+  if(p.halfDim) name+="m7b5";
+  else if(p.dim7) name+="dim7";
+  else{
+    if(p.quality==="min") name+="m";
+    else if(p.quality==="dim") name+="dim";
+    else if(p.quality==="aug") name+="aug";
+    else if(p.quality==="sus2") name+="sus2";
+    else if(p.quality==="sus4") name+="sus4";
+
+    if(p.mMaj7) name+="Maj7";
+    else if(p.maj7) name+="maj7";
+    else if(p.want7) name+="7";
+
+    if(p.want13) name+="13";
+    else if(p.want11) name+="11";
+    else if(p.want9) name+="9";
+
+    if(p.want6 && !/69/.test(p.normalizedInput)) name+="6";
+    if(/69/.test(p.normalizedInput)) name+="69";
+  }
+
+  const alts=[]; const altRe=/([b#])(5|9|11|13)/ig; let m;
+  while((m=altRe.exec(p.normalizedInput))!==null) alts.push(m[1]+m[2]);
+  if(alts.length) name+=alts.join("");
+
+  if(p.bass) name+="/"+p.bass;
+  return name;
+}
+
+function buildChord(p){
+  const rootPc=toPc(p.root);
+  let ints=baseTriad(p.quality).slice();
+
+  if(p.halfDim){ ints=baseTriad("dim"); addIfMissing(ints,10); }
+  if(p.dim7){ ints=baseTriad("dim"); addIfMissing(ints,9); }
+
+  if(p.want7 || p.maj7 || p.mMaj7){
+    if(p.mMaj7){ ints=baseTriad("min"); addIfMissing(ints,11); }
+    else if(p.maj7) addIfMissing(ints,11);
+    else if(!p.dim7 && !p.halfDim) addIfMissing(ints,10);
+  }
+
+  if(p.want6) addIfMissing(ints,9);
+
+  if(p.want9 || p.want11 || p.want13){
+    if(!ints.includes(10) && !ints.includes(11) && !ints.includes(9)){
+      addIfMissing(ints, (p.maj7 ? 11 : 10));
+    }
+    addIfMissing(ints,14);
+  }
+  if(p.want11 || p.want13) addIfMissing(ints,17);
+  if(p.want13) addIfMissing(ints,21);
+
+  applyAlterations(ints, p.alts);
+
+  const pcs = uniq(ints.map(i => (rootPc + (i%12) + 12)%12));
+  const bassPc = p.bass ? toPc(p.bass) : null;
+
+  return {pcs, bassPc, rootPc, ints, modernName: normalizeDisplayName(p)};
+}
+
+/* ================= Inversions ================= */
+function inversionsFromPcs(pcs){
+  const base = pcs.slice().sort((a,b)=>a-b);
+  const out=[];
+  for(let k=0;k<base.length;k++){
+    out.push(base.slice(k).concat(base.slice(0,k)));
+  }
+  return out;
+}
+function invLabel(idx){
+  if(idx===0) return "Root";
+  if(idx===1) return "1st";
+  if(idx===2) return "2nd";
+  if(idx===3) return "3rd";
+  if(idx===4) return "4th";
+  if(idx===5) return "5th";
+  if(idx===6) return "6th";
+  return idx+"th";
+}
+
+/* ================= Degrees ================= */
+function degreesFromIntervals(ints){
+  const map = {0:"1",1:"b2",2:"2",3:"b3",4:"3",5:"4",6:"b5",7:"5",8:"#5",9:"6",10:"b7",11:"7"};
+  const pcs = uniq(ints.map(i => ((i%12)+12)%12)).sort((a,b)=>a-b);
+  const extra = [];
+  if(ints.some(i=>i>=14)) extra.push("9");
+  if(ints.some(i=>i>=17)) extra.push("11");
+  if(ints.some(i=>i>=21)) extra.push("13");
+  const out = pcs.map(pc => map[pc] || "?");
+  extra.forEach(x=>{ if(!out.includes(x)) out.push(x); });
+  return out.join(", ");
+}
+
+/* ================= Bubble collision avoidance =================
+   Simple & effective:
+   - compute initial (x,y) for each bubble
+   - if two bubbles too close, push them left/right alternately
+=============================================================== */
+function resolveBubbleCollisions(bubbles, radius, pad){
+  if(bubbles.length <= 1) return bubbles;
+  const minDist = (radius*2) + pad;
+
+  // sort by x for stable resolution
+  bubbles.sort((a,b)=>a.x-b.x);
+
+  for(let pass=0; pass<6; pass++){
+    for(let i=0;i<bubbles.length;i++){
+      for(let j=i+1;j<bubbles.length;j++){
+        const a=bubbles[i], b=bubbles[j];
+        const dx=b.x-a.x;
+        const dy=b.y-a.y;
+        const dist=Math.sqrt(dx*dx+dy*dy);
+        if(dist < minDist){
+          const push = (minDist - dist)/2 + 0.5;
+          // push horizontally, alternate direction a left, b right
+          a.x -= push;
+          b.x += push;
+        }
+      }
+    }
+  }
+  return bubbles;
+}
+
+/* ================= Keyboard SVG =================
+   mainMode=true => keys stay black/white, ONLY bubbles highlight (exact)
+   - Black keys get subtle gradient + highlight edge like screenshot
+=================================================== */
+function buildKeyboardSVG({highlightPcs, preferFlats, baseOct, mainMode}){
+  const hi = new Set(highlightPcs||[]);
+  const octaves = mainMode ? 3 : 2;
+  const addFinalC = true;
+
+  const whiteW = mainMode ? 58 : 36;
+  const whiteH = mainMode ? 240 : 72;
+  const blackW = mainMode ? 36 : 22;
+  const blackH = mainMode ? 150 : 46;
+
+  const whiteOrder = ["C","D","E","F","G","A","B"];
+  const whitePCs = [0,2,4,5,7,9,11];
+  const blackAfter = [
+    {after:"C", pc:1},
+    {after:"D", pc:3},
+    {after:"F", pc:6},
+    {after:"G", pc:8},
+    {after:"A", pc:10}
+  ];
+
+  const totalWhite = octaves*7 + (addFinalC?1:0);
+  const svgW = totalWhite*whiteW;
+
+  const whiteX = idx => idx*whiteW;
+
+  let svg = `<svg viewBox="0 0 ${svgW} ${whiteH}" xmlns="http://www.w3.org/2000/svg">`;
+
+  // defs for black-key gradient (subtle iOS-like)
+  if(mainMode){
+    svg += `
+      <defs>
+        <linearGradient id="blkG" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#2a2f3a"/>
+          <stop offset="0.45" stop-color="#141823"/>
+          <stop offset="1" stop-color="#0b0f18"/>
+        </linearGradient>
+        <linearGradient id="blkShine" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="rgba(255,255,255,0.12)"/>
+          <stop offset="0.25" stop-color="rgba(255,255,255,0.04)"/>
+          <stop offset="1" stop-color="rgba(0,0,0,0)"/>
+        </linearGradient>
+      </defs>
+    `;
+  }
+
+  // White keys
+  const whiteKeys = [];
+  for(let o=0;o<octaves;o++){
+    for(let i=0;i<7;i++){
+      whiteKeys.push({pc:whitePCs[i], idx:o*7+i});
+    }
+  }
+  if(addFinalC) whiteKeys.push({pc:0, idx:octaves*7});
+
+  for(const k of whiteKeys){
+    const x = whiteX(k.idx);
+    const on = hi.has(k.pc);
+
+    const fill = (!mainMode && on) ? "rgba(247,201,72,0.85)" : "var(--whiteKey)";
+    const stroke = "var(--whiteKeyBorder)";
+
+    svg += `<rect x="${x}" y="0" width="${whiteW}" height="${whiteH}" rx="${mainMode?12:10}"
+                 fill="${fill}" stroke="${stroke}" stroke-width="${mainMode?2:1.6}"/>`;
+  }
+
+  // Black keys (with gradient + subtle shine overlay)
+  for(let o=0;o<octaves;o++){
+    for(const b of blackAfter){
+      const i = whiteOrder.indexOf(b.after);
+      const idx = o*7 + i;
+      const x = whiteX(idx) + (whiteW - blackW/2);
+      const on = hi.has(b.pc);
+
+      const fill = (!mainMode && on) ? "rgba(247,201,72,0.95)" : (mainMode ? "url(#blkG)" : "var(--blackKey)");
+      const stroke = mainMode ? "#05070c" : "var(--blackKeyBorder)";
+
+      svg += `<g>
+        <rect x="${x}" y="0" width="${blackW}" height="${blackH}" rx="${mainMode?10:8}"
+              fill="${fill}" stroke="${stroke}" stroke-width="${mainMode?2:1.6}"/>
+        ${mainMode ? `<rect x="${x+2}" y="2" width="${blackW-4}" height="${blackH-6}" rx="8"
+              fill="url(#blkShine)" opacity="0.9"/>` : ""}
+      </g>`;
+    }
+  }
+
+  // Octave labels like screenshot (main only)
+  if(mainMode){
+    const startOct = baseOct;
+    for(let o=0;o<=octaves;o++){
+      const x = whiteX(o*7) + 10;
+      const y = whiteH - 18;
+      svg += `<text x="${x}" y="${y}" font-size="20" font-weight="900" fill="rgba(107,114,128,.70)">C${startOct+o}</text>`;
+    }
+  }
+
+  // Bubbles ONLY for main keyboard
+  if(mainMode){
+    const radius = 26;
+    const pad = 8;
+
+    // focus octave centers
+    const focusOct = 1;
+    const baseIdx = focusOct*7;
+
+    const centers = new Map();
+    // white centers (bubble sits lower)
+    for(let i=0;i<7;i++){
+      const pc = whitePCs[i];
+      const idx = baseIdx + i;
+      centers.set(pc, {x: whiteX(idx)+whiteW/2, y: whiteH-48, kind:"white"});
+    }
+    // black centers (bubble sits on black key near top)
+    for(const b of blackAfter){
+      const i = whiteOrder.indexOf(b.after);
+      const idx = baseIdx + i;
+      centers.set(b.pc, {
+        x: whiteX(idx)+(whiteW - blackW/2)+blackW/2,
+        y: 62, kind:"black"
+      });
+    }
+
+    const used = uniq([...hi]);
+
+    // build bubble list with fallback positions
+    let bubbles = [];
+    for(const pc of used){
+      let c = centers.get(pc);
+      if(!c){
+        // fallback to octave 0
+        const baseIdx2 = 0;
+        if(whitePCs.includes(pc)){
+          const i = whitePCs.indexOf(pc);
+          const idx = baseIdx2 + i;
+          c = {x:whiteX(idx)+whiteW/2, y:whiteH-48, kind:"white"};
+        }else{
+          const bb = blackAfter.find(x=>x.pc===pc);
+          if(bb){
+            const i = whiteOrder.indexOf(bb.after);
+            const idx = baseIdx2 + i;
+            c = {x:whiteX(idx)+(whiteW - blackW/2)+blackW/2, y:62, kind:"black"};
+          }
+        }
+      }
+      if(!c) continue;
+      bubbles.push({pc, x:c.x, y:c.y});
+    }
+
+    // collision resolve (mainly affects adjacent black notes)
+    bubbles = resolveBubbleCollisions(bubbles, radius, pad);
+
+    // clamp bubbles within viewBox margins
+    for(const b of bubbles){
+      b.x = Math.max(radius+6, Math.min(svgW - radius - 6, b.x));
+    }
+
+    // draw bubbles
+    for(const b of bubbles){
+      const label = pcName(b.pc, preferFlats);
+      svg += `<circle cx="${b.x}" cy="${b.y}" r="${radius}" fill="var(--bubble)"/>`;
+      svg += `<text x="${b.x}" y="${b.y+8}" text-anchor="middle"
+                    font-size="20" font-weight="900" fill="var(--bubbleText)">${label}</text>`;
+    }
+  }
+
+  svg += `</svg>`;
+  return svg;
+}
+
+/* ================= Staff preview ================= */
+function renderStaff(svgEl, pcs, preferFlats){
+  const svgW=800;
+  const lineY=[30,42,54,66,78];
+  let s = "";
+  for(const y of lineY){
+    s += `<line x1="40" y1="${y}" x2="${svgW-40}" y2="${y}" stroke="rgba(107,114,128,.55)" stroke-width="2"/>`;
+  }
+  const sorted = pcs.slice().sort((a,b)=>a-b);
+  const x0=120, dx=70;
+  sorted.forEach((pc,i)=>{
+    const x=x0+i*dx;
+    const y=66 - ((pc-0+12)%12)*2;
+    s += `<ellipse cx="${x}" cy="${y}" rx="12" ry="8" fill="rgba(15,23,42,.15)" stroke="rgba(107,114,128,.45)" stroke-width="2"/>`;
+    const label = pcName(pc, preferFlats);
+    s += `<text x="${x}" y="${y+4}" text-anchor="middle" font-size="11" font-weight="900" fill="rgba(107,114,128,.95)">${label}</text>`;
+  });
+  svgEl.innerHTML = s;
+}
+
+/* ================= Improved sound (more "piano-ish") =================
+   - oscillator blend (triangle+sine) for richer tone
+   - lowpass filter + slight compressor
+   - subtle "chorus-ish" detune using 2 oscillators
+======================================================================= */
+let audioCtx=null, master=null;
+function ensureAudio(){
+  if(!audioCtx){
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    master = audioCtx.createGain();
+    master.gain.value = 0.85;
+
+    const comp = audioCtx.createDynamicsCompressor();
+    comp.threshold.value = -20;
+    comp.knee.value = 18;
+    comp.ratio.value = 3.5;
+    comp.attack.value = 0.006;
+    comp.release.value = 0.12;
+
+    master.connect(comp).connect(audioCtx.destination);
+  }
+  if(audioCtx.state==="suspended") audioCtx.resume();
+}
+function midiToHz(m){ return 440 * Math.pow(2, (m-69)/12); }
+function pcToMidi(pc, baseMidi){
+  const basePc = baseMidi % 12;
+  let diff = (pc - basePc + 12) % 12;
+  return baseMidi + diff;
+}
+
+function playOneNote(midi, t0){
+  const f = midiToHz(midi);
+
+  const filter = audioCtx.createBiquadFilter();
+  filter.type = "lowpass";
+  filter.frequency.setValueAtTime(2200, t0);
+  filter.Q.setValueAtTime(0.6, t0);
+
+  const gain = audioCtx.createGain();
+  // ADSR-ish (piano: fast attack, medium decay, short release)
+  gain.gain.setValueAtTime(0.0001, t0);
+  gain.gain.exponentialRampToValueAtTime(0.32, t0 + 0.012);
+  gain.gain.exponentialRampToValueAtTime(0.10, t0 + 0.18);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 1.2);
+
+  // Blend: triangle + sine (slightly detuned) => warmer
+  const osc1 = audioCtx.createOscillator();
+  osc1.type = "triangle";
+  osc1.frequency.setValueAtTime(f, t0);
+
+  const osc2 = audioCtx.createOscillator();
+  osc2.type = "sine";
+  osc2.frequency.setValueAtTime(f, t0);
+  osc2.detune.setValueAtTime(6, t0); // subtle detune
+
+  const osc3 = audioCtx.createOscillator();
+  osc3.type = "sine";
+  osc3.frequency.setValueAtTime(f, t0);
+  osc3.detune.setValueAtTime(-6, t0);
+
+  const mix = audioCtx.createGain();
+  mix.gain.setValueAtTime(0.95, t0);
+
+  osc1.connect(mix);
+  osc2.connect(mix);
+  osc3.connect(mix);
+
+  mix.connect(filter).connect(gain).connect(master);
+
+  osc1.start(t0); osc2.start(t0); osc3.start(t0);
+  osc1.stop(t0+1.25); osc2.stop(t0+1.25); osc3.stop(t0+1.25);
+}
+
+function playChord(pcs, mode, baseOct){
+  ensureAudio();
+  const now = audioCtx.currentTime;
+  const baseMidi = 12*(baseOct+1);
+  const sorted = pcs.slice().sort((a,b)=>a-b);
+  const order = mode==="desc" ? sorted.slice().reverse() : sorted.slice();
+
+  order.forEach((pc,i)=>{
+    const delay = (mode==="off") ? 0 : i*0.085;
+    const t0 = now + delay;
+    const midi = pcToMidi(pc, baseMidi) + 12;
+    playOneNote(midi, t0);
+  });
+}
+
+/* ================= UI / State ================= */
+const $ = (id)=>document.getElementById(id);
+const KEY_FAV="piano_chords_fav_v3";
+
+function loadArr(k){ try{return JSON.parse(localStorage.getItem(k)||"[]");}catch{return[];} }
+function saveArr(k,a){ localStorage.setItem(k, JSON.stringify(a)); }
+
+let state = {
+  query: "Cm",
+  baseOct: 3,
+  arp: "off",
+  invIndex: 0,
+  preferFlats: true,
+  parsed: null,
+  chord: null,
+  inversions: [],
+  modern: "",
+  legacy: "",
+  railRootIndex: 0,
+  railQualIndex: 0,
+  loop: false,
+  leftInv: 0,
+  favFilter: false,
+  viewTab: "root"
+};
+
+const QUALS = [
+  {label:"Major", value:""},
+  {label:"Minor", value:"m"},
+  {label:"7", value:"7"},
+  {label:"maj7", value:"maj7"},
+  {label:"m7", value:"m7"},
+  {label:"dim", value:"dim"},
+  {label:"m7b5", value:"m7b5"},
+  {label:"aug", value:"aug"},
+  {label:"sus2", value:"sus2"},
+  {label:"sus4", value:"sus4"},
+  {label:"9", value:"9"},
+  {label:"m9", value:"m9"},
+  {label:"maj9", value:"maj9"},
+  {label:"11", value:"11"},
+  {label:"13", value:"13"},
+  {label:"7b5", value:"7b5"},
+  {label:"7#5", value:"7#5"},
+  {label:"7b9", value:"7b9"},
+  {label:"7#9", value:"7#9"},
+  {label:"13#11", value:"13#11"},
+];
+
+function setErr(msg){
+  const e=$("err");
+  if(!msg){ e.style.display="none"; e.textContent=""; return; }
+  e.style.display="block"; e.textContent=msg;
+}
+
+/* ================= Tabs (fix buttons not working) =================
+   root: show info + staff + inversion (everything)
+   piano: emphasize keyboard, hide staff+info
+   staff: show staff large + info, keep keyboard
+=================================================================== */
+function applyView(){
+  const rootView = $("rootView");
+  const staffBox = $("staffBox");
+  const infoTable = $("infoTable");
+  const pianoView = $("pianoView");
+
+  if(state.viewTab === "piano"){
+    // hide staff & info, keep piano
+    staffBox.classList.add("viewHide");
+    infoTable.classList.add("viewHide");
+    rootView.classList.remove("viewHide"); // keep inversion + legacy line visible
+    pianoView.classList.remove("viewHide");
+  }else if(state.viewTab === "staff"){
+    staffBox.classList.remove("viewHide");
+    infoTable.classList.remove("viewHide");
+    rootView.classList.remove("viewHide");
+    pianoView.classList.remove("viewHide");
+  }else{
+    // root
+    staffBox.classList.remove("viewHide");
+    infoTable.classList.remove("viewHide");
+    rootView.classList.remove("viewHide");
+    pianoView.classList.remove("viewHide");
+  }
+}
+
+function buildFromRails(){
+  const root = ROOTS_RAIL[state.railRootIndex];
+  const qual = QUALS[state.railQualIndex].value;
+  const q = root + qual;
+  $("searchInput").value = q;
+  search(q);
+}
+
+function search(raw){
+  setErr(null);
+  const p = parseChord(raw);
+  if(p.error){ setErr(p.error); return; }
+
+  const ch = buildChord(p);
+  const invs = inversionsFromPcs(ch.pcs);
+
+  const modern = ch.modernName;
+  const looksLegacy = raw.includes("/") && /\/(7|6|9|11|13|5[+-]|9[+-]|11[+-]|13[+-])/.test(raw.replace(/\s+/g,""));
+  const legacy = looksLegacy ? raw : modernToLegacy(modern);
+
+  state.parsed=p;
+  state.chord=ch;
+  state.inversions=invs;
+  state.invIndex=Math.min(state.invIndex, invs.length-1);
+  state.modern=modern;
+  state.legacy=legacy;
+  state.preferFlats=p.preferFlats;
+
+  $("rightTitle").textContent = modern;
+  $("legacyLine").textContent = `Legacy: ${legacy}   |   Modern: ${modern}`;
+  $("leftRootBig").textContent = p.root;
+
+  renderRight();
+  renderLeftList();
+  syncRailsFromCurrent();
+}
+
+function syncRailsFromCurrent(){
+  const p=state.parsed;
+  if(!p) return;
+
+  const legacy = state.legacy || "";
+  const prefer = legacy.startsWith("Db")?"Db":
+                 legacy.startsWith("Eb")?"Eb":
+                 legacy.startsWith("Gb")?"Gb":
+                 legacy.startsWith("Ab")?"Ab":
+                 legacy.startsWith("Bb")?"Bb":
+                 p.root;
+  const idx = ROOTS_RAIL.indexOf(prefer);
+  if(idx>=0) state.railRootIndex=idx;
+
+  const qualStr = state.modern.replace(p.root,"");
+  const qidx = QUALS.findIndex(x=>x.value.toLowerCase()===qualStr.toLowerCase());
+  if(qidx>=0) state.railQualIndex=qidx;
+
+  renderRails();
+}
+
+function renderRails(){
+  const rail=$("noteRail");
+  rail.innerHTML="";
+  const show = ["C","C#","Db","D","D#","Eb","E","F","F#","Gb"];
+  show.forEach(n=>{
+    const span=document.createElement("span");
+    span.textContent=n;
+    span.className = (ROOTS_RAIL[state.railRootIndex]===n) ? "active" : "";
+    rail.appendChild(span);
+  });
+
+  $("qualRail").innerHTML = `<span class="mut"> </span><span>${QUALS[state.railQualIndex].label}</span><span class="mut"> </span>`;
+}
+
+function renderRight(){
+  const p=state.parsed, ch=state.chord;
+  if(!p || !ch) return;
+
+  const invPcs = state.inversions[state.invIndex] || ch.pcs;
+
+  $("degText").textContent = degreesFromIntervals(ch.ints);
+  const notes = invPcs.slice().sort((a,b)=>a-b).map(pc=>pcName(pc, state.preferFlats)).join(", ");
+  $("noteText").textContent = notes;
+
+  // inversion segmented (right)
+  const invSeg = $("rightInvSeg");
+  invSeg.innerHTML="";
+  state.inversions.forEach((_,idx)=>{
+    const b=document.createElement("button");
+    b.textContent=invLabel(idx);
+    if(idx===state.invIndex) b.classList.add("active");
+    b.onclick=()=>{ state.invIndex=idx; renderRight(); renderLeftList(); };
+    invSeg.appendChild(b);
+  });
+
+  // staff
+  renderStaff($("staffSvg"), invPcs, state.preferFlats);
+
+  // MAIN keyboard: black/white + bubbles only + gradient black keys + collision avoidance
+  $("kbdMain").innerHTML = buildKeyboardSVG({
+    highlightPcs: invPcs,
+    preferFlats: state.preferFlats,
+    baseOct: state.baseOct,
+    mainMode: true
+  });
+
+  // favorites star state
+  const fav = loadArr(KEY_FAV);
+  $("favBtn").textContent = fav.includes(state.legacy) ? "★" : "☆";
+
+  applyView();
+}
+
+function renderLeftList(){
+  const list=$("chordList");
+  const q = ($("searchInput").value||"").trim().toLowerCase();
+  const root = state.parsed?.root || "C";
+
+  const items = QUALS.map(x => (root + x.value));
+  const fav = loadArr(KEY_FAV);
+
+  list.innerHTML="";
+  items
+    .filter(name => !q || name.toLowerCase().includes(q))
+    .filter(name => {
+      if(!state.favFilter) return true;
+      // match favorites by legacy or modern
+      const p=parseChord(name); if(p.error) return false;
+      const ch=buildChord(p);
+      const legacy = modernToLegacy(ch.modernName);
+      return fav.includes(legacy) || fav.includes(ch.modernName) || fav.includes(name);
+    })
+    .forEach(name=>{
+      const p=parseChord(name); if(p.error) return;
+      const ch=buildChord(p);
+      const invPcs=inversionsFromPcs(ch.pcs)[state.leftInv] || inversionsFromPcs(ch.pcs)[0];
+
+      const div=document.createElement("div");
+      div.className="item"+((state.modern===ch.modernName)?" active":"");
+      div.onclick=()=>{
+        $("searchInput").value=name;
+        search(name);
+      };
+
+      const nameBox=document.createElement("div");
+      nameBox.innerHTML=`<div class="name">${ch.modernName}</div><div class="sub">Root inv.</div>`;
+
+      const mini=document.createElement("div");
+      mini.className="miniKbd";
+      // mini keyboards: keep old behavior (highlight keys in list)
+      mini.innerHTML = buildKeyboardSVG({
+        highlightPcs: invPcs,
+        preferFlats: p.preferFlats,
+        baseOct: 3,
+        mainMode: false
+      });
+
+      div.appendChild(nameBox);
+      div.appendChild(mini);
+      list.appendChild(div);
+    });
+
+  $("favFilterBtn").textContent = state.favFilter ? "All" : "Show ★";
+}
+
+/* ================= Favorites =================
+   Where are favorites saved?
+   - They are stored in the browser on the iPad using localStorage
+   - If you "Add to Home Screen" it stays saved inside that app instance
+================================================ */
+function toggleFav(){
+  const fav=loadArr(KEY_FAV);
+  const key=state.legacy; // we store legacy so you can search by old notation later
+  if(!key) return;
+  const next = fav.includes(key) ? fav.filter(x=>x!==key) : [key].concat(fav).slice(0,400);
+  saveArr(KEY_FAV,next);
+  $("favBtn").textContent = next.includes(key) ? "★":"☆";
+  renderLeftList();
+}
+
+function toggleTheme(){
+  const body=document.body;
+  const dark = body.getAttribute("data-theme")==="dark";
+  body.setAttribute("data-theme", dark ? "light" : "dark");
+  $("themeBtn").textContent = dark ? "☀︎" : "☾";
+}
+
+/* ================= Events ================= */
+function init(){
+  // Tabs (FIXED)
+  $("topTabs").querySelectorAll("button").forEach(b=>{
+    b.onclick=()=>{
+      $("topTabs").querySelectorAll("button").forEach(x=>x.classList.remove("active"));
+      b.classList.add("active");
+      state.viewTab = b.dataset.tab;
+      applyView();
+    };
+  });
+
+  $("themeBtn").onclick=toggleTheme;
+
+  $("favBtn").onclick=toggleFav;
+
+  $("favFilterBtn").onclick=()=>{
+    state.favFilter = !state.favFilter;
+    renderLeftList();
+  };
+
+  // Search: Enter to parse
+  $("searchInput").addEventListener("keydown",(e)=>{
+    if(e.key==="Enter"){
+      search($("searchInput").value.trim());
+    }
+  });
+  $("searchInput").addEventListener("input", ()=>renderLeftList());
+
+  // Left inversion segment affects mini keyboards list
+  $("leftInvSeg").querySelectorAll("button").forEach(btn=>{
+    btn.onclick=()=>{
+      $("leftInvSeg").querySelectorAll("button").forEach(x=>x.classList.remove("active"));
+      btn.classList.add("active");
+      state.leftInv=parseInt(btn.dataset.inv,10);
+      renderLeftList();
+    };
+  });
+
+  // root rail arrows
+  $("rootPrev").onclick=()=>{ state.railRootIndex=(state.railRootIndex-1+ROOTS_RAIL.length)%ROOTS_RAIL.length; buildFromRails(); };
+  $("rootNext").onclick=()=>{ state.railRootIndex=(state.railRootIndex+1)%ROOTS_RAIL.length; buildFromRails(); };
+
+  // quality arrows
+  $("qualPrev").onclick=()=>{ state.railQualIndex=(state.railQualIndex-1+QUALS.length)%QUALS.length; buildFromRails(); };
+  $("qualNext").onclick=()=>{ state.railQualIndex=(state.railQualIndex+1)%QUALS.length; buildFromRails(); };
+
+  // octave
+  $("octSeg").querySelectorAll("button").forEach(b=>{
+    b.onclick=()=>{
+      $("octSeg").querySelectorAll("button").forEach(x=>x.classList.remove("active"));
+      b.classList.add("active");
+      state.baseOct=parseInt(b.dataset.oct,10);
+      renderRight();
+    };
+  });
+
+  // loop toggle (visual)
+  $("loopToggle").onclick=()=>{
+    state.loop=!state.loop;
+    $("loopToggle").classList.toggle("on", state.loop);
+  };
+
+  // arp seg
+  $("arpSeg").querySelectorAll("button").forEach(b=>{
+    b.onclick=()=>{
+      $("arpSeg").querySelectorAll("button").forEach(x=>x.classList.remove("active"));
+      b.classList.add("active");
+      state.arp=b.dataset.arp;
+    };
+  });
+
+  // play
+  $("playBtn").onclick=()=>{
+    if(!state.chord) return;
+    const pcs = state.inversions[state.invIndex] || state.chord.pcs;
+    playChord(pcs, state.arp, state.baseOct);
+  };
+
+  // Start
+  $("searchInput").value="Cm";
+  search("Cm");
+  state.viewTab = "root";
+  applyView();
+}
+
+init();
+</script>
+</body>
+</html>
