@@ -50,8 +50,19 @@
 
     .left{display:flex; flex-direction:column; height:min(860px, calc(100vh - 28px));}
     .hdr{padding:12px 12px 6px; font-size:44px; font-weight:900; letter-spacing:-.02em;}
-    .searchWrap{padding:8px 12px 8px;}
-    .search{width:100%; padding:10px 12px; border-radius:12px; border:1px solid var(--line); background:transparent; color:var(--txt); font-size:15px; outline:none;}
+
+    /* Search with clear (X) */
+    .searchWrap{padding:8px 12px 8px; position:relative;}
+    .search{width:100%; padding:10px 40px 10px 12px; border-radius:12px; border:1px solid var(--line); background:transparent; color:var(--txt); font-size:15px; outline:none;}
+    .clearSearchBtn{
+      position:absolute; right:22px; top:50%; transform:translateY(-50%);
+      width:26px; height:26px; border-radius:999px;
+      border:1px solid var(--line); background:var(--card2);
+      display:none; align-items:center; justify-content:center;
+      cursor:pointer; user-select:none; font-weight:900; color:var(--mut);
+    }
+    .clearSearchBtn.show{display:flex;}
+    .clearSearchBtn:active{transform:translateY(-50%) scale(.96);}
 
     .underSearch{padding:0 12px 10px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
     .rootScroll{display:flex; gap:10px; overflow:auto; padding:6px 6px; border:1px solid var(--line); border-radius:12px; background:var(--card2); max-width:220px;}
@@ -164,7 +175,8 @@
       <div class="hdr">Chords</div>
 
       <div class="searchWrap">
-        <input class="search" id="searchInput" placeholder="Search Chords (legacy or modern)"/>
+        <input class="search" id="searchInput" placeholder="Search Chords (legacy / modern / words: “B half diminished”)"/>
+        <div class="clearSearchBtn" id="clearSearchBtn" title="Clear">×</div>
       </div>
 
       <!-- Under-search controls (Root + Range) -->
@@ -293,6 +305,52 @@ function normRoot(s){
 }
 function uniq(a){ return [...new Set(a)]; }
 
+/* ================= Natural language chord search ================= */
+function normalizeWordSearch(raw){
+  let s=(raw||"").trim();
+  if(!s) return s;
+
+  // common phrases -> symbols / conventional
+  const lower=s.toLowerCase().replace(/\s+/g," ").trim();
+
+  // Extract root at start (e.g., "B half diminished")
+  const m = s.trim().match(/^([A-Ga-g])([#b]?)(.*)$/);
+  if(!m) return s;
+
+  const root = (m[1].toUpperCase() + (m[2]||""));
+  let rest = (m[3]||"").trim();
+
+  // If the rest contains any slash legacy things already, keep raw
+  // but still allow words to convert
+  const restLower = rest.toLowerCase();
+
+  // half diminished => m7b5
+  if(restLower.includes("half diminished") || restLower.includes("half-diminished") || restLower.includes("halfdiminished")){
+    return root + "m7b5";
+  }
+
+  // fully diminished
+  if(restLower.includes("diminished") || restLower.includes("dim")){
+    // allow "diminished seventh"
+    if(restLower.includes("7") || restLower.includes("seventh")) return root + "dim7";
+    return root + "dim";
+  }
+
+  // major / minor / aug / sus
+  if(restLower.includes("major 7") || restLower.includes("major7") || restLower.includes("maj7")) return root + "maj7";
+  if(restLower.includes("minor 7") || restLower.includes("minor7") || restLower.includes("min7") || restLower.includes("m7")) return root + "m7";
+  if(restLower.includes("minor")) return root + "m";
+  if(restLower.includes("augmented") || restLower.includes("aug")) return root + "aug";
+  if(restLower.includes("sus2")) return root + "sus2";
+  if(restLower.includes("sus4") || restLower.includes("sus")) return root + "sus4";
+
+  // fallback - if user typed root only
+  if(!rest) return root;
+
+  // otherwise keep original
+  return s;
+}
+
 /* ================= Legacy normalization ================= */
 function normalizeLegacyNotation(raw){
   let s=(raw||"").trim();
@@ -361,7 +419,10 @@ function parseChord(inputRaw){
   const legacyInput=(inputRaw||"").trim();
   if(!legacyInput) return {error:"Empty input"};
 
-  const normalized = normalizeLegacyNotation(legacyInput)
+  // NEW: word search normalization before everything
+  const wordNormalized = normalizeWordSearch(legacyInput);
+
+  const normalized = normalizeLegacyNotation(wordNormalized)
     .replace(/Δ/gi,"maj")
     .replace(/7\+/gi,"maj7")
     .replace(/ø/gi,"m7b5")
@@ -577,7 +638,6 @@ function ensureAudio(){
 }
 function unlockAudioOnce(){
   ensureAudio();
-  // a tiny click (silent-ish) to unlock on iOS
   const now=audioCtx.currentTime;
   const o=audioCtx.createOscillator();
   const g=audioCtx.createGain();
@@ -652,7 +712,7 @@ function buildKeyboardSVG({highlightPcs, preferFlats, startOct, endOct, interact
   const hi = new Set(highlightPcs||[]);
   const sel = selectedSet || new Set();
 
-  const octaves = Math.max(1, (endOct - startOct)); // show full octaves between
+  const octaves = Math.max(1, (endOct - startOct));
   const addFinalC = true;
 
   const whiteW=58, whiteH=240, blackW=36, blackH=150;
@@ -691,13 +751,11 @@ function buildKeyboardSVG({highlightPcs, preferFlats, startOct, endOct, interact
     svg += `<rect x="${x}" y="0" width="${whiteW}" height="${whiteH}" rx="12"
       fill="var(--whiteKey)" stroke="var(--whiteKeyBorder)" stroke-width="2"/>`;
 
-    // Labels C4 / C5 like screenshot
     if(k.pc===0){
       const lab=`C${k.octave}`;
       svg += `<text x="${x+10}" y="${whiteH-18}" font-size="20" font-weight="900" fill="rgba(107,114,128,.70)">${lab}</text>`;
     }
 
-    // Interactive hitbox
     if(interactive){
       svg += `<rect x="${x}" y="0" width="${whiteW}" height="${whiteH}" rx="12" fill="transparent" data-pc="${k.pc}" data-key="white" style="cursor:pointer"/>`;
     }
@@ -720,19 +778,15 @@ function buildKeyboardSVG({highlightPcs, preferFlats, startOct, endOct, interact
   // Bubbles
   if(showBubbles){
     const radius=26, pad=8;
-
-    // Build candidate bubble centers based on a middle octave
     const focusOct = Math.min(1, Math.max(0, octaves-1));
     const baseIdx = focusOct*7;
 
     const centers=new Map();
-    // white centers lower
     for(let i=0;i<7;i++){
       const pc=whitePCs[i];
       const idx=baseIdx+i;
       centers.set(pc,{x:whiteX(idx)+whiteW/2, y:whiteH-48, kind:"white"});
     }
-    // black centers near top
     for(const b of blackAfter){
       const i=whiteOrder.indexOf(b.after);
       const idx=baseIdx+i;
@@ -760,7 +814,7 @@ function buildKeyboardSVG({highlightPcs, preferFlats, startOct, endOct, interact
   return svg;
 }
 
-/* ================= Simple chord detection for Piano mode (optional display) ================= */
+/* ================= Chord candidates for Piano mode (fill LEFT list) ================= */
 const QUALS = [
   {label:"Major", value:""},
   {label:"Minor", value:"m"},
@@ -769,6 +823,7 @@ const QUALS = [
   {label:"m7", value:"m7"},
   {label:"dim", value:"dim"},
   {label:"m7b5", value:"m7b5"},
+  {label:"dim7", value:"dim7"},
   {label:"aug", value:"aug"},
   {label:"sus2", value:"sus2"},
   {label:"sus4", value:"sus4"},
@@ -785,7 +840,7 @@ const QUALS = [
 ];
 
 function makeChordLookup(){
-  const map=new Map(); // key "pcs_sorted" -> [names...]
+  const map=new Map(); // key pcs_sorted -> [{name, root, q, pcs}, ...]
   for(const r of NOTE_SHARP){
     for(const q of QUALS){
       const name=r+q.value;
@@ -793,10 +848,13 @@ function makeChordLookup(){
       if(p.error) continue;
       const ch=buildChord(p);
       const key=ch.pcs.slice().sort((a,b)=>a-b).join(",");
-      const modern=ch.modernName;
       if(!map.has(key)) map.set(key,[]);
-      map.get(key).push(modern);
+      map.get(key).push({name:ch.modernName, raw:name, pcs:ch.pcs, preferFlats:p.preferFlats});
     }
+  }
+  // Sort each entry: shorter names first, then alphabetical
+  for(const [k, arr] of map.entries()){
+    arr.sort((a,b)=>a.name.length-b.name.length || a.name.localeCompare(b.name));
   }
   return map;
 }
@@ -804,7 +862,7 @@ const CHORD_LOOKUP = makeChordLookup();
 
 /* ================= UI / State ================= */
 const $ = (id)=>document.getElementById(id);
-const KEY_FAV="piano_chords_fav_v4";
+const KEY_FAV="piano_chords_fav_v5";
 
 function loadArr(k){ try{return JSON.parse(localStorage.getItem(k)||"[]");}catch{return[];} }
 function saveArr(k,a){ localStorage.setItem(k, JSON.stringify(a)); }
@@ -820,17 +878,13 @@ let state = {
   modern:"",
   legacy:"",
   railRootIndex:0,
-  railQualIndex:1, // Minor default for Cm
+  railQualIndex:1,
   loop:false,
   leftInv:0,
   favFilter:false,
   viewTab:"root",
-
-  // Range for keyboard display
   rangeStart:3,
   rangeEnd:5,
-
-  // Piano mode selected notes
   pianoSelected:new Set(),
 };
 
@@ -882,7 +936,6 @@ function renderRails(){
   });
   $("qualRail").innerHTML = `<span class="mut"> </span><span>${QUALS[state.railQualIndex].label}</span><span class="mut"> </span>`;
 
-  // update root scroll active
   [...$("rootScroll").querySelectorAll("button")].forEach((b,i)=>{
     b.classList.toggle("active", i===state.railRootIndex);
   });
@@ -893,19 +946,24 @@ function buildFromRails(){
   const qual=QUALS[state.railQualIndex].value;
   const q=root+qual;
   $("searchInput").value=q;
+  updateSearchClearUI();
   search(q);
 }
 
 /* ================= Search & Render (Chord mode) ================= */
 function search(raw){
   setErr(null);
+
   const p=parseChord(raw);
   if(p.error){ setErr(p.error); return; }
+
   const ch=buildChord(p);
   state.parsed=p;
   state.chord=ch;
   state.inversions=inversionsFromPcs(ch.pcs);
-  state.invIndex=Math.min(state.invIndex, state.inversions.length-1);
+
+  // Ensure invIndex always valid
+  state.invIndex=Math.max(0, Math.min(state.invIndex, state.inversions.length-1));
 
   state.modern=ch.modernName;
   const looksLegacy = raw.includes("/") && /\/(7|6|9|11|13|5[+-]|9[+-]|11[+-]|13[+-])/.test(raw.replace(/\s+/g,""));
@@ -941,7 +999,6 @@ function syncRailsFromCurrent(){
 }
 
 function renderRight(){
-  // If Piano mode: render interactive keyboard based on selected notes
   if(state.viewTab==="piano"){
     renderPianoMode();
     applyView();
@@ -956,7 +1013,7 @@ function renderRight(){
   $("degText").textContent=degreesFromIntervals(ch.ints);
   $("noteText").textContent=invPcs.slice().sort((a,b)=>a-b).map(pc=>pcName(pc,state.preferFlats)).join(", ");
 
-  // inversion segmented (RIGHT) — FIXED: always rebuild & always re-render
+  // RIGHT inversions seg — always rebuild and always wire
   const invSeg=$("rightInvSeg");
   invSeg.innerHTML="";
   state.inversions.forEach((_,idx)=>{
@@ -973,7 +1030,6 @@ function renderRight(){
 
   renderStaff($("staffSvg"), invPcs, state.preferFlats);
 
-  // chord display keyboard (not interactive)
   $("kbdMain").innerHTML = buildKeyboardSVG({
     highlightPcs: invPcs,
     preferFlats: state.preferFlats,
@@ -990,16 +1046,93 @@ function renderRight(){
   applyView();
 }
 
+/* ================= LEFT list ================= */
 function renderLeftList(){
   const list=$("chordList");
   const q=($("searchInput").value||"").trim().toLowerCase();
-  const root = state.parsed?.root || ROOTS_RAIL[state.railRootIndex] || "C";
-  const items = QUALS.map(x => (root + x.value));
   const fav=loadArr(KEY_FAV);
 
   list.innerHTML="";
+
+  // If Piano mode: show chord matches for selected notes
+  if(state.viewTab==="piano"){
+    const key = [...state.pianoSelected].sort((a,b)=>a-b).join(",");
+    const matches = (CHORD_LOOKUP.get(key) || []).slice(0, 80);
+
+    // If user typed something in search while in piano mode, filter matches by text
+    const filtered = matches.filter(x => !q || x.name.toLowerCase().includes(q) || modernToLegacy(x.name).toLowerCase().includes(q));
+
+    if(!state.pianoSelected.size){
+      const empty=document.createElement("div");
+      empty.style.padding="12px";
+      empty.style.color="var(--mut)";
+      empty.style.fontWeight="900";
+      empty.textContent="Tap keys to select notes — matches will appear here.";
+      list.appendChild(empty);
+      return;
+    }
+
+    if(!filtered.length){
+      const empty=document.createElement("div");
+      empty.style.padding="12px";
+      empty.style.color="var(--mut)";
+      empty.style.fontWeight="900";
+      empty.textContent="No exact chord match for the selected notes (try adding/removing a note).";
+      list.appendChild(empty);
+      return;
+    }
+
+    filtered.forEach(x=>{
+      const div=document.createElement("div");
+      div.className="item";
+      div.onclick=()=>{
+        // Choose this chord => switch to Root tab, reset inversion to Root
+        state.viewTab="root";
+        setTabUI("root");
+        state.invIndex=0;
+
+        $("searchInput").value = x.name;
+        updateSearchClearUI();
+        search(x.name);
+        $("searchInput").blur();
+      };
+
+      const nameBox=document.createElement("div");
+      const legacy=modernToLegacy(x.name);
+      const star = fav.includes(legacy) ? "★" : "☆";
+      nameBox.innerHTML=`<div class="name">${x.name}</div><div class="sub">Legacy: ${legacy} &nbsp; ${star}</div>`;
+
+      const mini=document.createElement("div");
+      mini.className="miniKbd";
+      // show the chord on mini keyboard
+      const p=parseChord(x.name); if(!p.error){
+        const ch=buildChord(p);
+        const invPcs=inversionsFromPcs(ch.pcs)[0];
+        mini.innerHTML = buildKeyboardSVG({
+          highlightPcs: invPcs,
+          preferFlats: p.preferFlats,
+          startOct: 3,
+          endOct: 4,
+          interactive:false,
+          showBubbles:false
+        });
+      }
+
+      div.appendChild(nameBox);
+      div.appendChild(mini);
+      list.appendChild(div);
+    });
+
+    $("favFilterBtn").textContent = state.favFilter ? "All" : "Show ★";
+    return;
+  }
+
+  // Root mode list (by root + quality)
+  const root = state.parsed?.root || ROOTS_RAIL[state.railRootIndex] || "C";
+  const items = QUALS.map(x => (root + x.value));
+
   items
-    .filter(name => !q || name.toLowerCase().includes(q))
+    .filter(name => !q || name.toLowerCase().includes(q) || modernToLegacy(name).toLowerCase().includes(q) || normalizeWordSearch(name).toLowerCase().includes(q))
     .filter(name => {
       if(!state.favFilter) return true;
       const p=parseChord(name); if(p.error) return false;
@@ -1010,20 +1143,27 @@ function renderLeftList(){
     .forEach(name=>{
       const p=parseChord(name); if(p.error) return;
       const ch=buildChord(p);
-      const invPcs=inversionsFromPcs(ch.pcs)[state.leftInv] || inversionsFromPcs(ch.pcs)[0];
+
+      const invs=inversionsFromPcs(ch.pcs);
+      const invPcs=invs[state.leftInv] || invs[0];
 
       const div=document.createElement("div");
       div.className="item"+((state.modern===ch.modernName && state.viewTab!=="piano")?" active":"");
       div.onclick=()=>{
-        // switch to Root tab automatically when choosing chord from list
         state.viewTab="root";
         setTabUI("root");
+        state.invIndex=0; // selecting from list resets to root inversion
+
         $("searchInput").value=name;
+        updateSearchClearUI();
         search(name);
+        $("searchInput").blur();
       };
 
       const nameBox=document.createElement("div");
-      nameBox.innerHTML=`<div class="name">${ch.modernName}</div><div class="sub">Root inv.</div>`;
+      const legacy=modernToLegacy(ch.modernName);
+      const star = fav.includes(legacy) ? "★" : "☆";
+      nameBox.innerHTML=`<div class="name">${ch.modernName}</div><div class="sub">Legacy: ${legacy} &nbsp; ${star}</div>`;
 
       const mini=document.createElement("div");
       mini.className="miniKbd";
@@ -1046,24 +1186,22 @@ function renderLeftList(){
 
 /* ================= Piano mode (interactive keys + clear + play) ================= */
 function renderPianoMode(){
-  // Title: either detected chord(s) or selected notes
   const key = [...state.pianoSelected].sort((a,b)=>a-b).join(",");
-  const matches = CHORD_LOOKUP.get(key) || [];
+  const matches = (CHORD_LOOKUP.get(key) || []).map(x=>x.name);
+
   if(matches.length){
     $("rightTitle").textContent = matches[0];
     $("legacyLine").textContent = `Detected: ${matches.slice(0,4).join("  •  ")}`;
   }else{
     const notes = [...state.pianoSelected].sort((a,b)=>a-b).map(pc=>pcName(pc,true)).join(", ");
-    $("rightTitle").textContent = notes ? "Piano" : "Piano";
+    $("rightTitle").textContent = "Piano";
     $("legacyLine").textContent = notes ? `Selected: ${notes}` : "Tap keys to select notes";
   }
 
-  // Hide inversions UI when in piano mode (rightInvSeg still exists; just clear)
   $("rightInvSeg").innerHTML = "";
   $("degText").textContent = "—";
   $("noteText").textContent = "—";
 
-  // Interactive keyboard with bubbles on selected notes
   $("kbdMain").innerHTML = buildKeyboardSVG({
     highlightPcs: [],
     preferFlats: true,
@@ -1075,9 +1213,9 @@ function renderPianoMode(){
   });
 
   wireKeyboardInteractions();
+  renderLeftList(); // IMPORTANT: fill left list with matches
 }
 
-/* Attach pointer handlers to SVG key hitboxes */
 function wireKeyboardInteractions(){
   const svg = $("kbdMain").querySelector("svg");
   if(!svg) return;
@@ -1089,14 +1227,10 @@ function wireKeyboardInteractions(){
       ensureUnlockedByGesture();
 
       const pc = parseInt(el.getAttribute("data-pc"),10);
-      // toggle selected
       if(state.pianoSelected.has(pc)) state.pianoSelected.delete(pc);
       else state.pianoSelected.add(pc);
 
-      // play note immediately
       playClickNote(pc, state.rangeStart);
-
-      // re-render keyboard + title
       renderPianoMode();
     }, {passive:false});
   });
@@ -1113,6 +1247,12 @@ function toggleFav(){
   renderLeftList();
 }
 
+/* ================= Search clear UI ================= */
+function updateSearchClearUI(){
+  const v = ($("searchInput").value||"").trim();
+  $("clearSearchBtn").classList.toggle("show", v.length>0);
+}
+
 /* ================= Misc UI ================= */
 function toggleTheme(){
   const body=document.body;
@@ -1122,7 +1262,6 @@ function toggleTheme(){
 }
 
 function setTabUI(tab){
-  // visual tab buttons
   $("topTabs").querySelectorAll("button").forEach(x=>x.classList.remove("active"));
   const btn=[...$("topTabs").querySelectorAll("button")].find(b=>b.dataset.tab===tab);
   if(btn) btn.classList.add("active");
@@ -1154,7 +1293,6 @@ function init(){
   $("topTabs").querySelectorAll("button").forEach(b=>{
     b.onclick=()=>{
       setTabUI(b.dataset.tab);
-      // when switching to piano: render piano mode
       renderRight();
       applyView();
     };
@@ -1164,11 +1302,33 @@ function init(){
   $("searchInput").addEventListener("keydown",(e)=>{
     if(e.key==="Enter"){
       const v=$("searchInput").value.trim();
-      search(v);
-      $("searchInput").blur(); // <-- closes iPad keyboard
+      if(v){
+        // Keep current tab as-is; search affects chord mode primarily.
+        // If user is in piano mode and types a chord: switch to root
+        if(state.viewTab==="piano"){
+          state.viewTab="root";
+          setTabUI("root");
+          state.invIndex=0;
+        }
+        search(v);
+      }
+      $("searchInput").blur();
     }
   });
-  $("searchInput").addEventListener("input", ()=>renderLeftList());
+
+  $("searchInput").addEventListener("input", ()=>{
+    updateSearchClearUI();
+    renderLeftList();
+  });
+
+  // Search clear X
+  $("clearSearchBtn").onclick=()=>{
+    $("searchInput").value="";
+    updateSearchClearUI();
+    // If in piano mode, keep matches list (based on selected keys)
+    renderLeftList();
+    $("searchInput").focus();
+  };
 
   // Left inversion segment affects mini list only
   $("leftInvSeg").querySelectorAll("button").forEach(btn=>{
@@ -1205,9 +1365,10 @@ function init(){
     ensureUnlockedByGesture();
     state.pianoSelected.clear();
     if(state.viewTab==="piano") renderPianoMode();
+    else renderLeftList();
   };
 
-  // Play button: plays chord mode inversion OR piano selected
+  // Play button
   $("playBtn").onclick=()=>{
     ensureUnlockedByGesture();
     if(state.viewTab==="piano"){
@@ -1224,7 +1385,6 @@ function init(){
   // Range selects
   $("rangeStart").onchange=()=>{
     state.rangeStart=parseInt($("rangeStart").value,10);
-    // keep end > start
     if(state.rangeEnd <= state.rangeStart) state.rangeEnd = state.rangeStart+1;
     $("rangeEnd").value=String(state.rangeEnd);
     renderRight();
@@ -1236,7 +1396,7 @@ function init(){
     renderRight();
   };
 
-  // Build root scroll under search
+  // Root scroll
   buildRootScroll();
 
   // Default range
@@ -1245,6 +1405,7 @@ function init(){
 
   // Start chord
   $("searchInput").value="Cm";
+  updateSearchClearUI();
   state.viewTab="root";
   renderRails();
   search("Cm");
