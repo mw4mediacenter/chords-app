@@ -1,1537 +1,1577 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-  <meta name="apple-mobile-web-app-capable" content="yes"/>
-  <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Chords (Piano)</title>
-
-  <link rel="icon" href='data:image/svg+xml;utf8,
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
-    <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="%23007aff"/><stop offset="1" stop-color="%23004fb3"/>
-    </linearGradient></defs>
-    <rect rx="28" ry="28" width="128" height="128" fill="url(%23g)"/>
-    <text x="64" y="82" font-size="64" text-anchor="middle" fill="white" font-family="system-ui">🎹</text>
-  </svg>'/>
-
   <style>
     :root{
-      --bg:#f2f3f5; --card:#ffffff; --card2:#ffffff; --txt:#0f172a; --mut:#6b7280; --line:#e5e7eb;
-      --bubble:#f7c948; --bubbleText:#1a1a1a;
-      --whiteKey:#ffffff; --whiteKeyBorder:#cfd5df;
-      --shadow:0 10px 24px rgba(15, 23, 42, .08);
-      --iosBlue:#007aff;
-      --segBg:#e5e7eb; --segChip:#ffffff;
+      --bg:#f2f2f7;
+      --panel:#ffffff;
+      --text:#0b0b0f;
+      --muted:#6b6b78;
+      --line:#e5e5ea;
+      --blue:#0a84ff;
+      --bubble:#f6b332;
+      --bubbleText:#1b1b1f;
+      --shadow: 0 8px 24px rgba(0,0,0,.08);
+      --radius:16px;
     }
     [data-theme="dark"]{
-      --bg:#0b0c10; --card:#12141b; --card2:#0f1117; --txt:#eaeefb; --mut:#aab3cc; --line:#2a2f3b;
-      --whiteKey:#f3f4f6; --whiteKeyBorder:#374151;
-      --shadow:0 18px 40px rgba(0,0,0,.35);
-      --segBg:#2a2f3b; --segChip:#12141b;
+      --bg:#0b0b10;
+      --panel:#14141a;
+      --text:#f3f3f7;
+      --muted:#a0a0ad;
+      --line:#2a2a34;
+      --blue:#4aa3ff;
+      --shadow: 0 10px 26px rgba(0,0,0,.35);
     }
 
     *{box-sizing:border-box}
-    html,body{height:100%}
-    body{margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; background:var(--bg); color:var(--txt);}
-    button,input,select{touch-action:manipulation;} /* IMPORTANT for iPad */
-    .app{
-      max-width:1200px;
-      margin:0 auto;
-      padding:14px;
-      display:grid;
-      grid-template-columns:minmax(320px, 360px) 1fr;
-      gap:12px;
-      align-items:stretch;
-      min-height:calc(100vh - 28px);
-    }
-    @media(max-width:1100px){
-      .app{grid-template-columns:1fr; min-height:auto;}
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
     }
 
-    .panel{background:var(--card); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); overflow:hidden; display:flex; flex-direction:column; min-height:0;}
-    .topbar{display:flex; align-items:center; justify-content:space-between; padding:10px 12px; border-bottom:1px solid var(--line); background:var(--card2);}
-    .topbar .leftGroup{display:flex; gap:10px; align-items:center;}
-    .iconBtn{width:34px; height:34px; border-radius:10px; border:1px solid var(--line); background:transparent; display:grid; place-items:center; cursor:pointer; user-select:none; font-weight:900;}
-    .tabs{display:inline-flex; border:1px solid var(--line); background:var(--card2); border-radius:12px; overflow:hidden;}
-    .tabs button{border:0; background:transparent; color:var(--mut); padding:7px 12px; font-weight:900; font-size:14px; cursor:pointer;}
-    .tabs button.active{background:rgba(0,0,0,.04); color:var(--txt);}
-    [data-theme="dark"] .tabs button.active{background:rgba(255,255,255,.06);}
-    .starBtn{font-size:22px; font-weight:900; border:0; background:transparent; cursor:pointer; color:var(--iosBlue); padding:6px 8px; user-select:none;}
-
-    .left{min-height:0;}
-    .hdr{padding:12px 12px 6px; font-size:44px; font-weight:900; letter-spacing:-.02em;}
-
-    .searchWrap{padding:8px 12px 8px; position:relative;}
-    .search{width:100%; padding:10px 40px 10px 12px; border-radius:12px; border:1px solid var(--line); background:transparent; color:var(--txt); font-size:15px; outline:none;}
-    .clearSearchBtn{
-      position:absolute; right:22px; top:50%; transform:translateY(-50%);
-      width:26px; height:26px; border-radius:999px;
-      border:1px solid var(--line); background:var(--card2);
-      display:none; align-items:center; justify-content:center;
-      cursor:pointer; user-select:none; font-weight:900; color:var(--mut);
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:12px 12px 8px;
+      gap:10px;
+      position:sticky;
+      top:0;
+      background:linear-gradient(to bottom, rgba(0,0,0,0), rgba(0,0,0,0)) , var(--bg);
+      z-index:10;
     }
-    .clearSearchBtn.show{display:flex;}
-
-    .underSearch{padding:0 12px 10px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
-    .rootScroll{display:flex; gap:10px; overflow:auto; padding:6px 6px; border:1px solid var(--line); border-radius:12px; background:var(--card2); max-width:220px;}
-    .rootScroll::-webkit-scrollbar{height:0}
-    .rootScroll button{border:0; background:transparent; font-weight:900; color:rgba(15,23,42,.35); cursor:pointer; padding:6px 8px; border-radius:10px; white-space:nowrap;}
-    [data-theme="dark"] .rootScroll button{color:rgba(234,238,251,.35);}
-    .rootScroll button.active{color:var(--txt); background:rgba(0,0,0,.04);}
-    [data-theme="dark"] .rootScroll button.active{background:rgba(255,255,255,.06);}
-
-    .rangeBox{display:flex; gap:8px; align-items:center; font-weight:900; color:var(--mut); font-size:12px;}
-    .rangeBox select{border:1px solid var(--line); border-radius:10px; background:transparent; color:var(--txt); padding:7px 10px; font-weight:900;}
-
-    .rootRow{display:flex; gap:14px; padding:6px 12px 0; align-items:center; font-size:34px; font-weight:900;}
-    .rootRow small{font-size:16px; color:var(--mut); font-weight:800;}
-
-    .invMiniSeg{padding:8px 12px 10px; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;}
-    .miniSeg{display:inline-flex; gap:0; border:1px solid var(--line); border-radius:12px; overflow:hidden; background:var(--card2);}
-    .miniSeg button{border:0; border-right:1px solid var(--line); background:transparent; padding:6px 10px; font-weight:900; color:var(--mut); cursor:pointer; font-size:12px;}
-    .miniSeg button:last-child{border-right:0}
-    .miniSeg button.active{background:rgba(0,0,0,.04); color:var(--txt);}
-    [data-theme="dark"] .miniSeg button.active{background:rgba(255,255,255,.06);}
-
-    .favToggle{color:var(--iosBlue); font-weight:900; cursor:pointer; user-select:none; font-size:13px; white-space:nowrap;}
-    .manageFavBtn{border:1px solid var(--line); background:transparent; color:var(--txt); font-weight:900; padding:6px 10px; border-radius:12px; cursor:pointer; font-size:12px;}
-
-    .list{overflow:auto; padding:6px 0; flex:1; min-height:0;}
-    .item{display:flex; align-items:center; gap:10px; padding:10px 12px; cursor:pointer; border-left:4px solid transparent;}
-    .item:hover{background:rgba(0,0,0,.03);}
-    [data-theme="dark"] .item:hover{background:rgba(255,255,255,.04);}
-    .item.active{background:rgba(0,122,255,.10); border-left-color:var(--iosBlue);}
-    .item .name{min-width:70px; font-weight:900; font-size:18px;}
-    .item .sub{color:var(--mut); font-size:12px; font-weight:800; margin-top:2px;}
-    .miniKbd{flex:1; min-width:160px;}
-
-    .filterBtn{padding:10px 12px; border-top:1px solid var(--line); color:var(--iosBlue); font-weight:900; display:flex; gap:8px; align-items:center;}
-
-    .right{min-height:0;}
-    .bigChordTitle{text-align:center; font-size:28px; font-weight:900; padding:14px 0 8px; color:rgba(15,23,42,.55);}
-    [data-theme="dark"] .bigChordTitle{color:rgba(234,238,251,.55);}
-
-    .pickerBlock{padding:0 12px 10px;}
-    .rowPicker{display:flex; align-items:center; justify-content:space-between; gap:10px; border-top:1px solid var(--line); padding:10px 0;}
-    .leftArrow,.rightArrow{color:var(--iosBlue); font-weight:900; font-size:22px; padding:4px 8px; cursor:pointer; user-select:none;}
-
-    /* RIGHT root scroll (like left) */
-    .rightRootScroll{
-      display:flex; gap:10px; overflow:auto; padding:6px 6px;
-      border:1px solid var(--line); border-radius:12px; background:var(--card2);
-      flex:1; justify-content:flex-start;
+    .title{
+      font-weight:800;
+      font-size:28px;
+      letter-spacing:-.02em;
     }
-    .rightRootScroll::-webkit-scrollbar{height:0}
-    .rightRootScroll button{
-      border:0; background:transparent; font-weight:900; cursor:pointer; padding:6px 10px; border-radius:10px; white-space:nowrap;
-      color:rgba(15,23,42,.35);
-    }
-    [data-theme="dark"] .rightRootScroll button{color:rgba(234,238,251,.35);}
-    .rightRootScroll button.active{color:var(--txt); background:rgba(0,0,0,.04);}
-    [data-theme="dark"] .rightRootScroll button.active{background:rgba(255,255,255,.06);}
-
-    .qualRail{display:flex; align-items:center; justify-content:center; flex:1; font-size:18px; font-weight:900;}
-    .qualRail .mut{color:rgba(15,23,42,.35); font-weight:800;}
-    [data-theme="dark"] .qualRail .mut{color:rgba(234,238,251,.35);}
-
-    .sectionTitle{padding:12px 12px 8px; font-size:18px; font-weight:900; color:rgba(15,23,42,.45);}
-    [data-theme="dark"] .sectionTitle{color:rgba(234,238,251,.45);}
-
-    .invBar{padding:0 12px 10px; display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;}
-    .staffBox{margin:0 12px 12px; border-top:1px solid var(--line); padding-top:10px;}
-    .staffSvg{width:100%; height:120px; display:block;}
-
-    .infoTable{margin:0 12px 12px; border-top:1px solid var(--line);}
-    .infoRow{display:flex; justify-content:space-between; gap:10px; padding:12px 0; border-bottom:1px solid var(--line);}
-    .infoRow .k{color:rgba(15,23,42,.55); font-weight:900;}
-    [data-theme="dark"] .infoRow .k{color:rgba(234,238,251,.55);}
-    .infoRow .v{font-weight:900; color:rgba(15,23,42,.45);}
-    [data-theme="dark"] .infoRow .v{color:rgba(234,238,251,.55);}
-
-    .toggle{width:52px; height:30px; border-radius:999px; border:1px solid var(--line); position:relative; background:rgba(0,0,0,.05); cursor:pointer; user-select:none;}
-    [data-theme="dark"] .toggle{background:rgba(255,255,255,.08);}
-    .toggle .knob{position:absolute; top:3px; left:3px; width:24px; height:24px; border-radius:50%; background:var(--card); box-shadow:0 4px 10px rgba(0,0,0,.12); transition:.2s;}
-    .toggle.on{background:rgba(0,122,255,.25); border-color:rgba(0,122,255,.45);}
-    .toggle.on .knob{left:25px;}
-
-    .kbdArea{margin-top:auto; border-top:1px solid var(--line); background:var(--card2);}
-    .kbdMain{padding:0; height:260px; overflow:hidden;}
-    @media(max-width:1100px){ .kbdMain{height:240px;} }
-    .kbdMain svg{width:100%; height:100%; display:block;}
-
-    .kbdBar{border-top:1px solid var(--line); background:rgba(0,0,0,.03); display:flex; align-items:center; justify-content:space-between; padding:12px 14px; gap:12px; flex-wrap:wrap;}
-    [data-theme="dark"] .kbdBar{background:rgba(255,255,255,.04);}
-
-    .playBig{width:56px; height:56px; border-radius:14px; border:0; background:transparent; color:var(--iosBlue); font-size:30px; cursor:pointer; display:grid; place-items:center; user-select:none;}
-    .clearBtn{border:1px solid var(--line); background:transparent; color:var(--txt); font-weight:900; padding:10px 14px; border-radius:14px; cursor:pointer; user-select:none;}
-    .segIOS{background:var(--segBg); border-radius:14px; padding:4px; display:inline-flex; gap:4px; align-items:center; min-width:300px; justify-content:center;}
-    .segIOS button{border:0; background:transparent; padding:10px 14px; border-radius:12px; font-weight:900; cursor:pointer; color:rgba(15,23,42,.65); user-select:none;}
-    [data-theme="dark"] .segIOS button{color:rgba(234,238,251,.75);}
-    .segIOS button.active{background:var(--segChip); color:var(--txt); box-shadow:0 6px 18px rgba(0,0,0,.08);}
-    .dots{color:var(--iosBlue); font-size:22px; font-weight:900; letter-spacing:6px; padding-right:10px; user-select:none;}
-    .err{color:#b91c1c; font-weight:900; text-align:center; padding:8px 12px; display:none;}
-    [data-theme="dark"] .err{color:#ff8a8a;}
-    .viewHide{display:none !important;}
-
-    /* Favorites modal */
-    .modalBack{
-      position:fixed; inset:0; background:rgba(0,0,0,.35); display:none; align-items:center; justify-content:center; padding:16px; z-index:9999;
-    }
-    .modalBack.show{display:flex;}
-    .modal{
-      width:min(720px, 96vw);
-      max-height:min(80vh, 700px);
-      background:var(--card);
+    .tabs{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      background:var(--panel);
       border:1px solid var(--line);
-      border-radius:18px;
-      box-shadow:var(--shadow);
-      overflow:hidden;
-      display:flex; flex-direction:column;
+      border-radius:999px;
+      padding:6px;
+      box-shadow: var(--shadow);
     }
-    .modalHdr{
-      display:flex; align-items:center; justify-content:space-between;
-      padding:12px 14px; border-bottom:1px solid var(--line); background:var(--card2);
-      font-weight:900;
-    }
-    .modalBody{padding:10px 14px; overflow:auto; min-height:0;}
-    .favRow{display:flex; align-items:center; gap:10px; padding:10px 4px; border-bottom:1px solid var(--line);}
-    .favRow:last-child{border-bottom:0}
-    .favRow input{width:18px; height:18px;}
-    .favName{font-weight:900;}
-    .favSub{color:var(--mut); font-weight:800; font-size:12px;}
-    .modalFooter{
-      padding:12px 14px; border-top:1px solid var(--line);
-      display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap;
-    }
-    .btn{
-      border:1px solid var(--line);
+    .tab{
+      border:0;
       background:transparent;
-      color:var(--txt);
-      font-weight:900;
-      padding:10px 14px;
-      border-radius:14px;
+      padding:8px 14px;
+      border-radius:999px;
+      font-weight:700;
+      color:var(--muted);
       cursor:pointer;
     }
-    .btn.primary{border-color:rgba(0,122,255,.45); background:rgba(0,122,255,.12); color:var(--txt);}
-    .btn.danger{border-color:rgba(185,28,28,.35); background:rgba(185,28,28,.10);}
+    .tab.active{
+      background:rgba(10,132,255,.12);
+      color:var(--blue);
+    }
+    .actions{
+      display:flex; align-items:center; gap:8px;
+    }
+    .iconBtn{
+      width:40px; height:40px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:var(--panel);
+      box-shadow: var(--shadow);
+      cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      color:var(--text);
+    }
+    .star{
+      color:#ffcc00;
+      font-size:18px;
+      line-height:1;
+    }
+
+    .wrap{
+      display:grid;
+      grid-template-columns: 360px 1fr;
+      gap:12px;
+      padding:0 12px 12px;
+      max-width: 1300px;
+      margin: 0 auto;
+    }
+
+    /* Responsive: single column on narrow screens */
+    @media (max-width: 980px){
+      .wrap{ grid-template-columns: 1fr; }
+      .title{font-size:24px}
+    }
+
+    .card{
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .left{
+      padding:12px;
+    }
+    .searchRow{
+      display:flex; gap:8px; align-items:center;
+    }
+    .search{
+      flex:1;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.02);
+    }
+    [data-theme="dark"] .search{ background:rgba(255,255,255,.04); }
+    .search input{
+      width:100%;
+      border:0;
+      outline:none;
+      background:transparent;
+      color:var(--text);
+      font-size:16px;
+    }
+    .pillRow{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-top:10px;
+    }
+    .seg{
+      display:flex;
+      gap:6px;
+      background:rgba(0,0,0,.04);
+      border:1px solid var(--line);
+      padding:4px;
+      border-radius:999px;
+    }
+    [data-theme="dark"] .seg{ background:rgba(255,255,255,.06); }
+    .seg button{
+      border:0;
+      background:transparent;
+      padding:7px 12px;
+      border-radius:999px;
+      font-weight:700;
+      color:var(--muted);
+      cursor:pointer;
+    }
+    .seg button.active{
+      background:var(--panel);
+      color:var(--text);
+      border:1px solid var(--line);
+    }
+
+    .rootScroller{
+      margin-top:10px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .rootLabel{
+      font-weight:800;
+      font-size:18px;
+      width:30px;
+      text-align:center;
+    }
+    .rootTrack{
+      overflow:auto;
+      -webkit-overflow-scrolling: touch;
+      display:flex;
+      gap:10px;
+      padding:8px 6px;
+      border:1px solid var(--line);
+      border-radius:14px;
+      background:rgba(0,0,0,.02);
+      flex:1;
+    }
+    [data-theme="dark"] .rootTrack{ background:rgba(255,255,255,.04); }
+    .rootItem{
+      min-width:40px;
+      height:34px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:var(--panel);
+      font-weight:800;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:var(--muted);
+      user-select:none;
+    }
+    .rootItem.active{ color:var(--blue); background:rgba(10,132,255,.10); border-color:rgba(10,132,255,.25); }
+
+    .list{
+      margin-top:10px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      max-height: calc(100vh - 250px);
+      overflow:auto;
+      padding-right:4px;
+    }
+    @media (max-width: 980px){
+      .list{ max-height: 320px; }
+    }
+    .row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:10px 10px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.02);
+      cursor:pointer;
+    }
+    [data-theme="dark"] .row{ background:rgba(255,255,255,.04); }
+    .row.active{
+      outline:3px solid rgba(10,132,255,.25);
+      border-color: rgba(10,132,255,.35);
+      background: rgba(10,132,255,.10);
+    }
+    .row .name{
+      font-weight:900;
+      font-size:18px;
+    }
+    .row .sub{
+      font-size:12px;
+      color:var(--muted);
+      margin-top:2px;
+    }
+    .miniKeys{
+      width:130px;
+      height:34px;
+      border-radius:10px;
+      border:1px solid var(--line);
+      background:linear-gradient(#fff,#f5f5f8);
+      position:relative;
+      overflow:hidden;
+    }
+    [data-theme="dark"] .miniKeys{ background:linear-gradient(#1a1a22,#121218); }
+    .miniMark{
+      position:absolute;
+      bottom:0;
+      width:10px;
+      border-radius:6px 6px 0 0;
+      background: rgba(246,179,50,.85);
+    }
+
+    /* Right panel */
+    .right{
+      padding:12px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+    .headerRow{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .hTitle{
+      font-weight:900;
+      font-size:26px;
+      letter-spacing:-.02em;
+    }
+    .legacyLine{
+      color:var(--muted);
+      font-size:13px;
+      font-weight:700;
+      text-align:right;
+      white-space:nowrap;
+    }
+
+    .invRow{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:10px;
+      border:1px solid var(--line);
+      border-radius:14px;
+      background:rgba(0,0,0,.02);
+    }
+    [data-theme="dark"] .invRow{ background:rgba(255,255,255,.04); }
+
+    .invBtns{
+      display:flex; gap:6px;
+      background:rgba(0,0,0,.04);
+      border:1px solid var(--line);
+      padding:4px;
+      border-radius:999px;
+    }
+    [data-theme="dark"] .invBtns{ background:rgba(255,255,255,.06); }
+    .invBtns button{
+      border:0; background:transparent;
+      padding:7px 12px;
+      border-radius:999px;
+      font-weight:900;
+      color:var(--muted);
+      cursor:pointer;
+    }
+    .invBtns button.active{
+      background:var(--panel);
+      color:var(--text);
+      border:1px solid var(--line);
+    }
+
+    .details{
+      border:1px solid var(--line);
+      border-radius:14px;
+      overflow:hidden;
+    }
+    .dRow{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      padding:10px 12px;
+      border-bottom:1px solid var(--line);
+      background: rgba(0,0,0,.01);
+    }
+    [data-theme="dark"] .dRow{ background: rgba(255,255,255,.03); }
+    .dRow:last-child{border-bottom:0}
+    .dKey{color:var(--muted); font-weight:800;}
+    .dVal{font-weight:900;}
+
+    /* Piano */
+    .pianoWrap{
+      border:1px solid var(--line);
+      border-radius:18px;
+      overflow:hidden;
+      background:var(--panel);
+    }
+    .pianoTop{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:10px 12px;
+      border-bottom:1px solid var(--line);
+      background: rgba(0,0,0,.01);
+    }
+    [data-theme="dark"] .pianoTop{ background: rgba(255,255,255,.03); }
+
+    .playMode{
+      display:flex;
+      gap:8px;
+      background:rgba(0,0,0,.04);
+      border:1px solid var(--line);
+      padding:4px;
+      border-radius:999px;
+    }
+    [data-theme="dark"] .playMode{ background:rgba(255,255,255,.06); }
+    .playMode button{
+      border:0;background:transparent;
+      padding:7px 12px;border-radius:999px;
+      font-weight:900;color:var(--muted);cursor:pointer;
+    }
+    .playMode button.active{
+      background:var(--panel);
+      color:var(--text);
+      border:1px solid var(--line);
+    }
+
+    .kbd{
+      position:relative;
+      width:100%;
+      overflow:auto;
+      -webkit-overflow-scrolling: touch;
+      background: linear-gradient(#ffffff, #f2f2f7);
+    }
+    [data-theme="dark"] .kbd{
+      background: linear-gradient(#121218, #0b0b10);
+    }
+    .kbdInner{
+      position:relative;
+      height:230px;
+      min-width: 940px; /* enables horizontal scrolling instead of breaking layout */
+    }
+    @media (max-width: 980px){
+      .kbdInner{ min-width: 820px; }
+    }
+
+    .whiteKey{
+      position:absolute; top:0; bottom:0;
+      border-left:1px solid rgba(0,0,0,.12);
+      border-right:1px solid rgba(0,0,0,.08);
+      background: linear-gradient(#ffffff, #f4f4f8);
+      border-bottom:4px solid rgba(0,0,0,.10);
+      border-radius: 0 0 10px 10px;
+    }
+    [data-theme="dark"] .whiteKey{
+      background: linear-gradient(#f4f4f6, #d8d8de);
+    }
+
+    .blackKey{
+      position:absolute;
+      top:0;
+      height:140px;
+      border-radius: 0 0 10px 10px;
+      background: linear-gradient(#2d2f37, #0a0b10);
+      box-shadow:
+        inset 0 10px 18px rgba(255,255,255,.10),
+        inset 0 -10px 20px rgba(0,0,0,.45);
+      z-index:3;
+      border:1px solid rgba(255,255,255,.06);
+    }
+
+    .keyHit{
+      position:absolute; inset:0;
+      cursor:pointer;
+      background: transparent;
+    }
+
+    .bubble{
+      position:absolute;
+      width:44px; height:44px;
+      border-radius:999px;
+      background: var(--bubble);
+      color: var(--bubbleText);
+      font-weight:1000;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      z-index:5;
+      box-shadow: 0 10px 18px rgba(0,0,0,.18);
+      user-select:none;
+      pointer-events:none;
+    }
+
+    .bottomBar{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:10px 12px;
+      border-top:1px solid var(--line);
+      background: rgba(0,0,0,.01);
+    }
+    [data-theme="dark"] .bottomBar{ background: rgba(255,255,255,.03); }
+    .bigPlay{
+      width:56px;height:44px;border-radius:14px;
+      border:1px solid var(--line);
+      background:rgba(10,132,255,.12);
+      color:var(--blue);
+      font-weight:1000;
+      cursor:pointer;
+      display:flex;align-items:center;justify-content:center;
+    }
+
+    .tiny{
+      font-size:12px;color:var(--muted);font-weight:800;
+    }
+
+    .modalBackdrop{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,.35);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:99;
+      padding:16px;
+    }
+    .modal{
+      width:min(700px, 100%);
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:18px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .modalHead{
+      display:flex;justify-content:space-between;align-items:center;
+      padding:12px 12px;
+      border-bottom:1px solid var(--line);
+      font-weight:1000;
+    }
+    .modalBody{ padding:12px; }
+    .favList{ display:flex; flex-direction:column; gap:8px; max-height:60vh; overflow:auto; }
+    .favRow{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:10px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.02);
+      gap:10px;
+    }
+    [data-theme="dark"] .favRow{ background: rgba(255,255,255,.04); }
+    .chk{ width:18px;height:18px; }
+    .btn{
+      border:1px solid var(--line);
+      background:var(--panel);
+      padding:10px 12px;
+      border-radius:14px;
+      cursor:pointer;
+      font-weight:900;
+    }
+    .btn.primary{
+      background:rgba(10,132,255,.12);
+      color:var(--blue);
+      border-color: rgba(10,132,255,.25);
+    }
+    .rowRight{
+      display:flex; align-items:center; gap:8px;
+    }
   </style>
 </head>
 
 <body data-theme="light">
-  <div class="app">
+  <div class="topbar">
+    <div class="title">Chords</div>
+    <div class="tabs" role="tablist">
+      <button class="tab active" data-tab="root">Root</button>
+      <button class="tab" data-tab="piano">Piano</button>
+      <button class="tab" data-tab="staff">Staff</button>
+    </div>
+    <div class="actions">
+      <button class="iconBtn" id="themeBtn" title="Light/Dark">🌓</button>
+      <button class="iconBtn" id="favBtn" title="Favorites"><span class="star">★</span></button>
+    </div>
+  </div>
 
+  <div class="wrap">
     <!-- LEFT -->
-    <div class="panel left">
-      <div class="topbar">
-        <div class="leftGroup">
-          <button class="iconBtn" id="themeBtn" title="Toggle theme">☀︎</button>
-          <div class="tabs" id="topTabs">
-            <button class="active" data-tab="root">Root</button>
-            <button data-tab="piano">Piano</button>
-            <button data-tab="staff">Staff</button>
-          </div>
+    <div class="card left">
+      <div class="searchRow">
+        <div class="search">
+          🔎
+          <input id="searchInput" placeholder="Search chords (e.g. Cm7, B half diminished, C/7/5-/5+)" autocomplete="off" />
         </div>
-        <button class="starBtn" id="favBtn" title="Favorite">☆</button>
+        <button class="iconBtn" id="clearBtn" title="Clear">✕</button>
       </div>
 
-      <div class="hdr">Chords</div>
-
-      <div class="searchWrap">
-        <input class="search" id="searchInput" placeholder="Search Chords (legacy / modern / words: “B half diminished”)"/>
-        <div class="clearSearchBtn" id="clearSearchBtn" title="Clear">×</div>
-      </div>
-
-      <div class="underSearch">
-        <div class="rootScroll" id="rootScroll"></div>
-
-        <div class="rangeBox">
-          <span>Range:</span>
-          <select id="rangeStart">
-            <option value="2">C2</option>
-            <option value="3" selected>C3</option>
-            <option value="4">C4</option>
-          </select>
-          <span>to</span>
-          <select id="rangeEnd">
-            <option value="4" selected>C4</option>
-            <option value="5">C5</option>
-            <option value="6">C6</option>
-          </select>
+      <div class="pillRow">
+        <div class="seg">
+          <button class="active" data-filter="all">All</button>
+          <button data-filter="common">Common</button>
+          <button data-filter="jazz">Jazz</button>
         </div>
+        <div class="tiny" id="leftHint">Type + Enter to search</div>
       </div>
 
-      <div class="rootRow">
-        <div id="leftRootBig">C</div>
-        <small id="leftRootRail">C#  Db  D  D#  Eb</small>
+      <div class="rootScroller" id="rootScroller">
+        <div class="rootLabel" id="rootLabel">C</div>
+        <div class="rootTrack" id="rootTrack"></div>
       </div>
 
-      <div class="invMiniSeg">
-        <div class="miniSeg" id="leftInvSeg">
+      <div class="list" id="leftList"></div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="card right">
+      <div class="headerRow">
+        <div class="hTitle" id="bigChord">Cm</div>
+        <div class="legacyLine" id="legacyLine">Legacy: Cm | Modern: Cm</div>
+      </div>
+
+      <div class="invRow">
+        <div style="font-weight:1000">Inversion</div>
+        <div class="invBtns" id="invBtns">
           <button class="active" data-inv="0">Root</button>
           <button data-inv="1">1st</button>
           <button data-inv="2">2nd</button>
           <button data-inv="3">3rd</button>
-          <button data-inv="4">4th</button>
-          <button data-inv="5">5th</button>
-          <button data-inv="6">6th</button>
-        </div>
-        <div style="display:flex; gap:8px; align-items:center;">
-          <div class="favToggle" id="favFilterBtn">Show ★</div>
-          <button class="manageFavBtn" id="manageFavBtn" title="Manage favorites">Manage ★</button>
         </div>
       </div>
 
-      <div class="list" id="chordList"></div>
-      <div class="filterBtn">☰ <span>Filter Chords</span></div>
-    </div>
-
-    <!-- RIGHT -->
-    <div class="panel right">
-      <div class="bigChordTitle" id="rightTitle">Cm</div>
-
-      <div class="pickerBlock" id="pickerBlock">
-        <!-- ROOT row: arrows + scroll rail -->
-        <div class="rowPicker">
-          <div class="leftArrow" id="rootPrev">‹</div>
-          <div class="rightRootScroll" id="rightRootScroll"></div>
-          <div class="rightArrow" id="rootNext">›</div>
-        </div>
-
-        <div class="rowPicker">
-          <div class="leftArrow" id="qualPrev">‹</div>
-          <div class="qualRail" id="qualRail"></div>
-          <div class="rightArrow" id="qualNext">›</div>
-        </div>
+      <div class="details">
+        <div class="dRow"><div class="dKey">Degrees</div><div class="dVal" id="degOut">1, ♭3, 5</div></div>
+        <div class="dRow"><div class="dKey">Notes</div><div class="dVal" id="notesOut">C, E♭, G</div></div>
+        <div class="dRow"><div class="dKey">Mode</div><div class="dVal" id="modeOut">Minor</div></div>
       </div>
 
-      <div id="rootView">
-        <div class="sectionTitle">Inversion</div>
-        <div class="invBar">
-          <div class="miniSeg" id="rightInvSeg"></div>
-          <div style="color:var(--mut);font-weight:900;font-size:12px" id="legacyLine">—</div>
-        </div>
-
-        <div class="staffBox" id="staffBox">
-          <svg class="staffSvg" id="staffSvg" viewBox="0 0 800 140" xmlns="http://www.w3.org/2000/svg"></svg>
-        </div>
-
-        <div class="infoTable" id="infoTable">
-          <div class="infoRow"><div class="k">Degrees</div><div class="v" id="degText">—</div></div>
-          <div class="infoRow"><div class="k">Notes</div><div class="v" id="noteText">—</div></div>
-          <div class="infoRow">
-            <div class="k">Loop</div>
-            <div class="v"><div class="toggle" id="loopToggle"><div class="knob"></div></div></div>
+      <div class="pianoWrap">
+        <div class="pianoTop">
+          <div class="tiny" id="kbdTitle">Chord keyboard (single chord)</div>
+          <div class="playMode" id="playMode">
+            <button class="active" data-play="once">At Once</button>
+            <button data-play="asc">Ascending</button>
+            <button data-play="desc">Descending</button>
           </div>
         </div>
 
-        <div class="err" id="err"></div>
-      </div>
+        <div class="kbd" id="kbd">
+          <div class="kbdInner" id="kbdInner"></div>
+        </div>
 
-      <div class="kbdArea" id="pianoView">
-        <div class="kbdMain" id="kbdMain"></div>
-
-        <div class="kbdBar">
-          <button class="playBig" id="playBtn" title="Play">▶</button>
-          <button class="clearBtn" id="clearBtn" title="Clear (Piano mode)">Clear</button>
-
-          <div class="segIOS" id="arpSeg">
-            <button class="active" data-arp="off">At Once</button>
-            <button data-arp="asc">Ascending</button>
-            <button data-arp="desc">Descending</button>
-          </div>
-
-          <div class="dots">•••</div>
+        <div class="bottomBar">
+          <button class="bigPlay" id="playBtn">▶</button>
+          <div class="tiny" id="bottomInfo">Tap keys in Piano tab to detect chords</div>
+          <button class="btn" id="toggleFavBtn">★ Favorite</button>
         </div>
       </div>
     </div>
-
   </div>
 
-  <!-- Favorites modal -->
-  <div class="modalBack" id="favModalBack" aria-hidden="true">
-    <div class="modal" role="dialog" aria-modal="true" aria-label="Manage favorites">
-      <div class="modalHdr">
-        <div>Manage Favorites</div>
-        <button class="btn" id="favModalClose">Close</button>
+  <!-- Favorites Modal -->
+  <div class="modalBackdrop" id="modalBackdrop">
+    <div class="modal">
+      <div class="modalHead">
+        <div>Favorites</div>
+        <div class="rowRight">
+          <button class="btn" id="favEditBtn">Edit</button>
+          <button class="btn primary" id="favCloseBtn">Close</button>
+        </div>
       </div>
-      <div class="modalBody" id="favModalList"></div>
-      <div class="modalFooter">
-        <button class="btn" id="favSelectAll">Select all</button>
-        <button class="btn danger" id="favRemoveSelected">Remove selected</button>
-        <button class="btn danger" id="favRemoveAll">Remove all</button>
+      <div class="modalBody">
+        <div class="favList" id="favList"></div>
+        <div style="margin-top:10px; display:flex; gap:8px; justify-content:flex-end">
+          <button class="btn" id="removeSelectedBtn" style="display:none">Remove selected</button>
+          <button class="btn" id="removeAllBtn">Remove all</button>
+        </div>
       </div>
     </div>
   </div>
 
 <script>
-/* ================= Notes / pitch classes ================= */
-const NOTE_SHARP = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
-const NOTE_FLAT  = ["C","Db","D","Eb","E","F","Gb","G","Ab","A","Bb","B"];
-const FLAT_TO_SHARP = {"Db":"C#","Eb":"D#","Gb":"F#","Ab":"G#","Bb":"A#"};
-const ROOTS_RAIL = ["C","C#","Db","D","D#","Eb","E","F","F#","Gb","G","G#","Ab","A","A#","Bb","B"];
-
-function toPc(note){ return NOTE_SHARP.indexOf(note); }
-function pcName(pc, preferFlats=false){
-  pc=((pc%12)+12)%12;
-  return preferFlats ? NOTE_FLAT[pc] : NOTE_SHARP[pc];
-}
-function normRoot(s){
-  const m=s.match(/^([A-Ga-g])([#b]?)/);
-  if(!m) return null;
-  let r=m[1].toUpperCase()+(m[2]||"");
-  if(FLAT_TO_SHARP[r]) r=FLAT_TO_SHARP[r];
-  if(!NOTE_SHARP.includes(r)) return null;
-  return r;
-}
-function uniq(a){ return [...new Set(a)]; }
-
-/* ================= Touch-safe binder (iPad fixes) ================= */
-function bindTap(el, fn){
-  if(!el) return;
-  const h=(e)=>{ try{ e.preventDefault(); e.stopPropagation(); }catch{} fn(e); };
-  el.addEventListener("pointerdown", h, {passive:false});
-  el.addEventListener("touchstart", h, {passive:false});
-  el.addEventListener("click", (e)=>{ e.preventDefault(); fn(e); }, {passive:false});
-}
-
-/* ================= Natural language chord search ================= */
-function normalizeWordSearch(raw){
-  let s=(raw||"").trim();
-  if(!s) return s;
-
-  const m = s.trim().match(/^([A-Ga-g])([#b]?)(.*)$/);
-  if(!m) return s;
-
-  const root = (m[1].toUpperCase() + (m[2]||""));
-  let rest = (m[3]||"").trim();
-  const restLower = rest.toLowerCase();
-
-  if(restLower.includes("half diminished") || restLower.includes("half-diminished") || restLower.includes("halfdiminished")){
-    return root + "m7b5";
-  }
-  if(restLower.includes("diminished") || restLower.includes("dim")){
-    if(restLower.includes("7") || restLower.includes("seventh")) return root + "dim7";
-    return root + "dim";
-  }
-  if(restLower.includes("major 7") || restLower.includes("major7") || restLower.includes("maj7")) return root + "maj7";
-  if(restLower.includes("minor 7") || restLower.includes("minor7") || restLower.includes("min7") || restLower.includes("m7")) return root + "m7";
-  if(restLower.includes("minor")) return root + "m";
-  if(restLower.includes("augmented") || restLower.includes("aug")) return root + "aug";
-  if(restLower.includes("sus2")) return root + "sus2";
-  if(restLower.includes("sus4") || restLower.includes("sus")) return root + "sus4";
-  if(!rest) return root;
-
-  return s;
-}
-
-/* ================= Legacy normalization ================= */
-function normalizeLegacyNotation(raw){
-  let s=(raw||"").trim();
-  if(!s) return s;
-  s=s.replace(/\s+/g,"");
-  if(!s.includes("/")) return s;
-
-  const parts=s.split("/").filter(Boolean);
-  if(parts.length===2 && normRoot(parts[1])) return s;
-
-  const base=parts[0];
-  let tokens=parts.slice(1);
-
-  let bass=null;
-  if(tokens.length && normRoot(tokens[tokens.length-1])) bass=tokens.pop();
-
-  let addStr="";
-  for(const t of tokens){
-    if(/^(7|6|9|11|13)$/.test(t)){ addStr+=t; continue; }
-    const m=t.match(/^(5|9|11|13)([+-])$/);
-    if(m){ addStr+=(m[2]==="+"?"#":"b")+m[1]; continue; }
-    addStr+=t;
-  }
-  let out=base+addStr;
-  if(bass) out+="/"+bass;
-  return out;
-}
-function modernToLegacy(s){
-  const parts=s.split("/");
-  const main=parts[0];
-  const bass=parts.length>1?"/"+parts.slice(1).join("/"):"";
-  const out=main.replace(/([b#])(5|9|11|13)/g,(_,bsh,deg)=>"/"+deg+(bsh==="#"?"+":"-"));
-  return out+bass;
-}
-
-/* ================= Chord build ================= */
-function baseTriad(quality){
-  switch(quality){
-    case "min": return [0,3,7];
-    case "dim": return [0,3,6];
-    case "aug": return [0,4,8];
-    case "sus2": return [0,2,7];
-    case "sus4": return [0,5,7];
-    default: return [0,4,7];
-  }
-}
-function addIfMissing(ints,x){ if(!ints.includes(x)) ints.push(x); }
-function removeInterval(ints,x){ const i=ints.indexOf(x); if(i>=0) ints.splice(i,1); }
-
-function applyAlterations(ints, alts){
-  const degToInt = (deg)=> deg===9?14 : deg===11?17 : deg===13?21 : null;
-  for(const a of alts){
-    if(a.deg===5){
-      removeInterval(ints,7); removeInterval(ints,6); removeInterval(ints,8);
-      addIfMissing(ints, 7 + a.delta);
-      continue;
-    }
-    const base = degToInt(a.deg);
-    if(base==null) continue;
-    removeInterval(ints, base);
-    addIfMissing(ints, base + a.delta);
-  }
-}
-
-function parseChord(inputRaw){
-  const legacyInput=(inputRaw||"").trim();
-  if(!legacyInput) return {error:"Empty input"};
-
-  const wordNormalized = normalizeWordSearch(legacyInput);
-
-  const normalized = normalizeLegacyNotation(wordNormalized)
-    .replace(/Δ/gi,"maj")
-    .replace(/7\+/gi,"maj7")
-    .replace(/ø/gi,"m7b5")
-    .replace(/°/g,"dim");
-
-  let s=normalized;
-
-  let bass=null;
-  if(s.includes("/")){
-    const parts=s.split("/");
-    s=parts[0].trim();
-    bass=normRoot(parts[1].trim());
-    if(!bass) return {error:"Invalid slash bass note"};
-  }
-
-  const root=normRoot(s);
-  if(!root) return {error:"Invalid root"};
-  let tail=s.slice(root.length);
-
-  let quality="maj";
-  if(/^m(?!aj)/i.test(tail)){ quality="min"; tail=tail.replace(/^m(?!aj)/i,""); }
-  if(/^min/i.test(tail)){ quality="min"; tail=tail.replace(/^min/i,""); }
-  if(/^maj/i.test(tail)){ quality="maj"; tail=tail.replace(/^maj/i,""); }
-  if(/^dim/i.test(tail)){ quality="dim"; tail=tail.replace(/^dim/i,""); }
-  if(/^aug/i.test(tail) || /^\+/i.test(tail)){ quality="aug"; tail=tail.replace(/^aug/i,"").replace(/^\+/i,""); }
-  if(/^sus2/i.test(tail)){ quality="sus2"; tail=tail.replace(/^sus2/i,""); }
-  if(/^sus4/i.test(tail) || /^sus/i.test(tail)){ quality="sus4"; tail=tail.replace(/^sus4/i,"").replace(/^sus/i,""); }
-
-  let want7=false, maj7=false, dim7=false;
-  let want6=false, want9=false, want11=false, want13=false;
-  let halfDim=false, mMaj7=false;
-
-  if(/m7b5/i.test(s)) halfDim=true;
-  if(/dim7/i.test(s) || /o7/i.test(s)) dim7=true;
-  if(/mMaj7/i.test(s) || /mmaj7/i.test(s)) mMaj7=true;
-
-  if(/13/.test(tail)) want13=true;
-  else if(/11/.test(tail)) want11=true;
-  else if(/9/.test(tail)) want9=true;
-
-  if(/maj7/i.test(tail)) { maj7=true; want7=true; tail=tail.replace(/maj7/ig,""); }
-  if(/m7b5/i.test(tail)) { halfDim=true; want7=true; tail=tail.replace(/m7b5/ig,""); }
-  if(/dim7/i.test(tail)) { dim7=true; want7=true; tail=tail.replace(/dim7/ig,""); }
-  if(/mMaj7|mmaj7/i.test(tail)) { mMaj7=true; want7=true; tail=tail.replace(/mMaj7|mmaj7/ig,""); }
-  if(/7/.test(tail)) { want7=true; tail=tail.replace(/7/ig,""); }
-  if(/69/.test(tail)) { want6=true; want9=true; tail=tail.replace(/69/ig,""); }
-  if(/6/.test(tail)) { want6=true; tail=tail.replace(/6/ig,""); }
-
-  const alts=[];
-  const altRe=/([b#])(5|9|11|13)/ig; let m;
-  while((m=altRe.exec(normalized))!==null){
-    alts.push({deg:parseInt(m[2],10), delta:(m[1]==="b"?-1:+1)});
-  }
-
-  const preferFlats = /b/.test(normalized) && !/#/.test(normalized);
-  return {root,bass,quality,want7,maj7,dim7,want6,want9,want11,want13,halfDim,mMaj7,alts,preferFlats,legacyInput,normalizedInput:normalized};
-}
-
-function normalizeDisplayName(p){
-  let name=p.root;
-
-  if(p.halfDim) name+="m7b5";
-  else if(p.dim7) name+="dim7";
-  else{
-    if(p.quality==="min") name+="m";
-    else if(p.quality==="dim") name+="dim";
-    else if(p.quality==="aug") name+="aug";
-    else if(p.quality==="sus2") name+="sus2";
-    else if(p.quality==="sus4") name+="sus4";
-
-    if(p.mMaj7) name+="Maj7";
-    else if(p.maj7) name+="maj7";
-    else if(p.want7) name+="7";
-
-    if(p.want13) name+="13";
-    else if(p.want11) name+="11";
-    else if(p.want9) name+="9";
-
-    if(p.want6 && !/69/.test(p.normalizedInput)) name+="6";
-    if(/69/.test(p.normalizedInput)) name+="69";
-  }
-
-  const alts=[]; const altRe=/([b#])(5|9|11|13)/ig; let m;
-  while((m=altRe.exec(p.normalizedInput))!==null) alts.push(m[1]+m[2]);
-  if(alts.length) name+=alts.join("");
-
-  if(p.bass) name+="/"+p.bass;
-  return name;
-}
-
-function buildChord(p){
-  const rootPc=toPc(p.root);
-  let ints=baseTriad(p.quality).slice();
-
-  if(p.halfDim){ ints=baseTriad("dim"); addIfMissing(ints,10); }
-  if(p.dim7){ ints=baseTriad("dim"); addIfMissing(ints,9); }
-
-  if(p.want7 || p.maj7 || p.mMaj7){
-    if(p.mMaj7){ ints=baseTriad("min"); addIfMissing(ints,11); }
-    else if(p.maj7) addIfMissing(ints,11);
-    else if(!p.dim7 && !p.halfDim) addIfMissing(ints,10);
-  }
-  if(p.want6) addIfMissing(ints,9);
-
-  if(p.want9 || p.want11 || p.want13){
-    if(!ints.includes(10) && !ints.includes(11) && !ints.includes(9)){
-      addIfMissing(ints, (p.maj7 ? 11 : 10));
-    }
-    addIfMissing(ints,14);
-  }
-  if(p.want11 || p.want13) addIfMissing(ints,17);
-  if(p.want13) addIfMissing(ints,21);
-
-  applyAlterations(ints, p.alts);
-
-  const pcs = uniq(ints.map(i => (rootPc + (i%12) + 12)%12));
-  const bassPc = p.bass ? toPc(p.bass) : null;
-  return {pcs, bassPc, rootPc, ints, modernName: normalizeDisplayName(p)};
-}
-
-/* ================= Inversions ================= */
-function inversionsFromPcs(pcs){
-  const base = pcs.slice().sort((a,b)=>a-b);
-  const out=[];
-  for(let k=0;k<base.length;k++){
-    out.push(base.slice(k).concat(base.slice(0,k)));
-  }
-  return out;
-}
-function invLabel(idx){
-  if(idx===0) return "Root";
-  if(idx===1) return "1st";
-  if(idx===2) return "2nd";
-  if(idx===3) return "3rd";
-  if(idx===4) return "4th";
-  if(idx===5) return "5th";
-  if(idx===6) return "6th";
-  return idx+"th";
-}
-
-/* ================= Degrees ================= */
-function degreesFromIntervals(ints){
-  const map = {0:"1",1:"b2",2:"2",3:"b3",4:"3",5:"4",6:"b5",7:"5",8:"#5",9:"6",10:"b7",11:"7"};
-  const pcs = uniq(ints.map(i => ((i%12)+12)%12)).sort((a,b)=>a-b);
-  const extra = [];
-  if(ints.some(i=>i>=14)) extra.push("9");
-  if(ints.some(i=>i>=17)) extra.push("11");
-  if(ints.some(i=>i>=21)) extra.push("13");
-  const out = pcs.map(pc => map[pc] || "?");
-  extra.forEach(x=>{ if(!out.includes(x)) out.push(x); });
-  return out.join(", ");
-}
-
-/* ================= Bubble collision avoidance ================= */
-function resolveBubbleCollisions(bubbles, radius, pad){
-  if(bubbles.length <= 1) return bubbles;
-  const minDist = (radius*2) + pad;
-  bubbles.sort((a,b)=>a.x-b.x);
-  for(let pass=0; pass<6; pass++){
-    for(let i=0;i<bubbles.length;i++){
-      for(let j=i+1;j<bubbles.length;j++){
-        const a=bubbles[i], b=bubbles[j];
-        const dx=b.x-a.x, dy=b.y-a.y;
-        const dist=Math.sqrt(dx*dx+dy*dy);
-        if(dist < minDist){
-          const push = (minDist - dist)/2 + 0.5;
-          a.x -= push; b.x += push;
-        }
-      }
-    }
-  }
-  return bubbles;
-}
-
-/* ================= Staff preview ================= */
-function renderStaff(svgEl, pcs, preferFlats){
-  const svgW=800;
-  const lineY=[30,42,54,66,78];
-  let s="";
-  for(const y of lineY){
-    s+=`<line x1="40" y1="${y}" x2="${svgW-40}" y2="${y}" stroke="rgba(107,114,128,.55)" stroke-width="2"/>`;
-  }
-  const sorted=pcs.slice().sort((a,b)=>a-b);
-  const x0=120, dx=70;
-  sorted.forEach((pc,i)=>{
-    const x=x0+i*dx;
-    const y=66 - ((pc-0+12)%12)*2;
-    s+=`<ellipse cx="${x}" cy="${y}" rx="12" ry="8" fill="rgba(15,23,42,.15)" stroke="rgba(107,114,128,.45)" stroke-width="2"/>`;
-    const label=pcName(pc, preferFlats);
-    s+=`<text x="${x}" y="${y+4}" text-anchor="middle" font-size="11" font-weight="900" fill="rgba(107,114,128,.95)">${label}</text>`;
-  });
-  svgEl.innerHTML=s;
-}
-
-/* ================= Audio (iOS unlock + reliable play) ================= */
-let audioCtx=null, master=null;
-function ensureAudio(){
-  if(!audioCtx){
-    audioCtx=new (window.AudioContext||window.webkitAudioContext)();
-    master=audioCtx.createGain();
-    master.gain.value=0.85;
-
-    const comp=audioCtx.createDynamicsCompressor();
-    comp.threshold.value=-20;
-    comp.knee.value=18;
-    comp.ratio.value=3.5;
-    comp.attack.value=0.006;
-    comp.release.value=0.12;
-
-    master.connect(comp).connect(audioCtx.destination);
-  }
-  if(audioCtx.state==="suspended") audioCtx.resume();
-}
-let audioUnlocked=false;
-function ensureUnlockedByGesture(){
-  if(audioUnlocked) return;
-  try{
-    ensureAudio();
-    const now=audioCtx.currentTime;
-    const o=audioCtx.createOscillator();
-    const g=audioCtx.createGain();
-    g.gain.setValueAtTime(0.0001, now);
-    g.gain.exponentialRampToValueAtTime(0.0001, now+0.03);
-    o.frequency.setValueAtTime(880, now);
-    o.connect(g).connect(master);
-    o.start(now); o.stop(now+0.03);
-    audioUnlocked=true;
-  }catch{}
-}
-
-function midiToHz(m){ return 440 * Math.pow(2, (m-69)/12); }
-function pcToMidi(pc, baseMidi){
-  const basePc = baseMidi % 12;
-  let diff = (pc - basePc + 12) % 12;
-  return baseMidi + diff;
-}
-function playOneNote(midi, t0){
-  const f=midiToHz(midi);
-
-  const filter=audioCtx.createBiquadFilter();
-  filter.type="lowpass";
-  filter.frequency.setValueAtTime(2200, t0);
-  filter.Q.setValueAtTime(0.6, t0);
-
-  const gain=audioCtx.createGain();
-  gain.gain.setValueAtTime(0.0001, t0);
-  gain.gain.exponentialRampToValueAtTime(0.32, t0+0.012);
-  gain.gain.exponentialRampToValueAtTime(0.10, t0+0.18);
-  gain.gain.exponentialRampToValueAtTime(0.0001, t0+1.2);
-
-  const osc1=audioCtx.createOscillator(); osc1.type="triangle"; osc1.frequency.setValueAtTime(f, t0);
-  const osc2=audioCtx.createOscillator(); osc2.type="sine"; osc2.frequency.setValueAtTime(f, t0); osc2.detune.setValueAtTime(6, t0);
-  const osc3=audioCtx.createOscillator(); osc3.type="sine"; osc3.frequency.setValueAtTime(f, t0); osc3.detune.setValueAtTime(-6, t0);
-
-  const mix=audioCtx.createGain(); mix.gain.setValueAtTime(0.95, t0);
-  osc1.connect(mix); osc2.connect(mix); osc3.connect(mix);
-  mix.connect(filter).connect(gain).connect(master);
-
-  osc1.start(t0); osc2.start(t0); osc3.start(t0);
-  osc1.stop(t0+1.25); osc2.stop(t0+1.25); osc3.stop(t0+1.25);
-}
-function playChord(pcs, mode, baseOct){
-  ensureUnlockedByGesture();
-  ensureAudio();
-  const now=audioCtx.currentTime;
-  const baseMidi = 12*(baseOct+1);
-  const sorted=pcs.slice().sort((a,b)=>a-b);
-  const order = mode==="desc" ? sorted.slice().reverse() : sorted.slice();
-  order.forEach((pc,i)=>{
-    const delay=(mode==="off")?0:i*0.085;
-    const t0=now+delay;
-    const midi=pcToMidi(pc, baseMidi) + 12;
-    playOneNote(midi, t0);
-  });
-}
-function playClickNote(pc, baseOct){
-  ensureUnlockedByGesture();
-  ensureAudio();
-  const now=audioCtx.currentTime;
-  const baseMidi=12*(baseOct+1);
-  const midi=pcToMidi(pc, baseMidi)+12;
-  playOneNote(midi, now);
-}
-
-/* ================= Keyboard SVG ================= */
-function buildKeyboardSVG({highlightPcs, preferFlats, startOct, endOct, interactive, selectedSet, showBubbles=true}){
-  const hi = new Set(highlightPcs||[]);
-  const sel = selectedSet || new Set();
-
-  const octaves = Math.max(1, (endOct - startOct));
-  const addFinalC = true;
-
-  const whiteW=58, whiteH=240, blackW=36, blackH=150;
-  const whiteOrder=["C","D","E","F","G","A","B"];
-  const whitePCs=[0,2,4,5,7,9,11];
-  const blackAfter=[{after:"C",pc:1},{after:"D",pc:3},{after:"F",pc:6},{after:"G",pc:8},{after:"A",pc:10}];
-
-  const totalWhite = octaves*7 + (addFinalC?1:0);
-  const svgW = totalWhite*whiteW;
-
-  let svg = `<svg viewBox="0 0 ${svgW} ${whiteH}" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <linearGradient id="blkG" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="#2a2f3a"/>
-        <stop offset="0.45" stop-color="#141823"/>
-        <stop offset="1" stop-color="#0b0f18"/>
-      </linearGradient>
-      <linearGradient id="blkShine" x1="0" y1="0" x2="1" y2="0">
-        <stop offset="0" stop-color="rgba(255,255,255,0.12)"/>
-        <stop offset="0.25" stop-color="rgba(255,255,255,0.04)"/>
-        <stop offset="1" stop-color="rgba(0,0,0,0)"/>
-      </linearGradient>
-    </defs>
-  `;
-
-  const whiteX = idx => idx*whiteW;
-  const whiteKeys=[];
-  for(let o=0;o<octaves;o++){
-    for(let i=0;i<7;i++) whiteKeys.push({pc:whitePCs[i], idx:o*7+i, octave:startOct+o});
-  }
-  if(addFinalC) whiteKeys.push({pc:0, idx:octaves*7, octave:startOct+octaves});
-
-  for(const k of whiteKeys){
-    const x=whiteX(k.idx);
-    svg += `<rect x="${x}" y="0" width="${whiteW}" height="${whiteH}" rx="12"
-      fill="var(--whiteKey)" stroke="var(--whiteKeyBorder)" stroke-width="2"/>`;
-
-    if(k.pc===0){
-      const lab=`C${k.octave}`;
-      svg += `<text x="${x+10}" y="${whiteH-18}" font-size="20" font-weight="900" fill="rgba(107,114,128,.70)">${lab}</text>`;
-    }
-
-    if(interactive){
-      svg += `<rect x="${x}" y="0" width="${whiteW}" height="${whiteH}" rx="12" fill="transparent" data-pc="${k.pc}" data-key="white" style="cursor:pointer"/>`;
-    }
-  }
-
-  for(let o=0;o<octaves;o++){
-    for(const b of blackAfter){
-      const i=whiteOrder.indexOf(b.after);
-      const idx=o*7+i;
-      const x=whiteX(idx)+(whiteW-blackW/2);
-      svg += `<g>
-        <rect x="${x}" y="0" width="${blackW}" height="${blackH}" rx="10" fill="url(#blkG)" stroke="#05070c" stroke-width="2"/>
-        <rect x="${x+2}" y="2" width="${blackW-4}" height="${blackH-6}" rx="8" fill="url(#blkShine)" opacity="0.9"/>
-        ${interactive ? `<rect x="${x}" y="0" width="${blackW}" height="${blackH}" rx="10" fill="transparent" data-pc="${b.pc}" data-key="black" style="cursor:pointer"/>` : ""}
-      </g>`;
-    }
-  }
-
-  if(showBubbles){
-    const radius=26, pad=8;
-    const focusOct = Math.min(1, Math.max(0, octaves-1));
-    const baseIdx = focusOct*7;
-
-    const centers=new Map();
-    for(let i=0;i<7;i++){
-      const pc=whitePCs[i];
-      const idx=baseIdx+i;
-      centers.set(pc,{x:whiteX(idx)+whiteW/2, y:whiteH-48});
-    }
-    for(const b of blackAfter){
-      const i=whiteOrder.indexOf(b.after);
-      const idx=baseIdx+i;
-      centers.set(b.pc,{x:whiteX(idx)+(whiteW-blackW/2)+blackW/2, y:62});
-    }
-
-    const used = interactive ? uniq([...sel]) : uniq([...hi]);
-
-    let bubbles=[];
-    for(const pc of used){
-      const c=centers.get(pc);
-      if(!c) continue;
-      bubbles.push({pc, x:c.x, y:c.y});
-    }
-    bubbles = resolveBubbleCollisions(bubbles, radius, pad);
-    for(const b of bubbles){
-      b.x = Math.max(radius+6, Math.min(svgW-radius-6, b.x));
-      const label=pcName(b.pc, preferFlats);
-      svg += `<circle cx="${b.x}" cy="${b.y}" r="${radius}" fill="var(--bubble)"/>`;
-      svg += `<text x="${b.x}" y="${b.y+8}" text-anchor="middle" font-size="20" font-weight="900" fill="var(--bubbleText)">${label}</text>`;
-    }
-  }
-
-  svg += `</svg>`;
-  return svg;
-}
-
-/* ================= Chord candidates lookup (Piano mode list) ================= */
-const QUALS = [
-  {label:"Major", value:""},
-  {label:"Minor", value:"m"},
-  {label:"7", value:"7"},
-  {label:"maj7", value:"maj7"},
-  {label:"m7", value:"m7"},
-  {label:"dim", value:"dim"},
-  {label:"m7b5", value:"m7b5"},
-  {label:"dim7", value:"dim7"},
-  {label:"aug", value:"aug"},
-  {label:"sus2", value:"sus2"},
-  {label:"sus4", value:"sus4"},
-  {label:"9", value:"9"},
-  {label:"m9", value:"m9"},
-  {label:"maj9", value:"maj9"},
-  {label:"11", value:"11"},
-  {label:"13", value:"13"},
-  {label:"7b5", value:"7b5"},
-  {label:"7#5", value:"7#5"},
-  {label:"7b9", value:"7b9"},
-  {label:"7#9", value:"7#9"},
-  {label:"13#11", value:"13#11"},
-];
-
-function makeChordLookup(){
-  const map=new Map();
-  for(const r of NOTE_SHARP){
-    for(const q of QUALS){
-      const name=r+q.value;
-      const p=parseChord(name);
-      if(p.error) continue;
-      const ch=buildChord(p);
-      const key=ch.pcs.slice().sort((a,b)=>a-b).join(",");
-      if(!map.has(key)) map.set(key,[]);
-      map.get(key).push({name:ch.modernName, raw:name, pcs:ch.pcs, preferFlats:p.preferFlats});
-    }
-  }
-  for(const [k, arr] of map.entries()){
-    arr.sort((a,b)=>a.name.length-b.name.length || a.name.localeCompare(b.name));
-  }
-  return map;
-}
-const CHORD_LOOKUP = makeChordLookup();
-
-/* ================= UI / State ================= */
-const $ = (id)=>document.getElementById(id);
-const KEY_FAV="piano_chords_fav_v6";
-
-function loadArr(k){ try{return JSON.parse(localStorage.getItem(k)||"[]");}catch{return[];} }
-function saveArr(k,a){ localStorage.setItem(k, JSON.stringify(a)); }
-
-let state = {
-  arp:"off",
-  invIndex:0,
-  preferFlats:true,
-  parsed:null,
-  chord:null,
-  inversions:[],
-  modern:"",
-  legacy:"",
-  railRootIndex:0,
-  railQualIndex:1,
-  loop:false,
-  leftInv:0,
-  favFilter:false,
-  viewTab:"root",
-  rangeStart:3,
-  rangeEnd:5,
-  pianoSelected:new Set(),
+/* =========================
+   THEORY + PARSING
+========================= */
+
+const NOTE_NAMES_SHARP = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+const NOTE_NAMES_FLAT  = ["C","Db","D","Eb","E","F","Gb","G","Ab","A","Bb","B"];
+const ENHARMONIC = {
+  "Db":"C#","Eb":"D#","Gb":"F#","Ab":"G#","Bb":"A#",
+  "C#":"Db","D#":"Eb","F#":"Gb","G#":"Ab","A#":"Bb"
 };
 
-function setErr(msg){
-  const e=$("err");
-  if(!msg){ e.style.display="none"; e.textContent=""; return; }
-  e.style.display="block"; e.textContent=msg;
+function pcFromNoteName(n){
+  const norm = n.replace("♭","b").replace("♯","#").trim();
+  const up = norm[0].toUpperCase() + norm.slice(1);
+  const idxSharp = NOTE_NAMES_SHARP.indexOf(up);
+  if (idxSharp >= 0) return idxSharp;
+  const idxFlat = NOTE_NAMES_FLAT.indexOf(up);
+  if (idxFlat >= 0) return idxFlat;
+  return null;
+}
+function nameFromPc(pc, preferFlats=false){
+  pc = (pc%12+12)%12;
+  return preferFlats ? NOTE_NAMES_FLAT[pc] : NOTE_NAMES_SHARP[pc];
+}
+function pretty(n){
+  return n.replace("b","♭").replace("#","♯");
 }
 
-/* ================= Views ================= */
-function applyView(){
-  const staffBox=$("staffBox");
-  const infoTable=$("infoTable");
-  if(state.viewTab==="piano"){
-    staffBox.classList.add("viewHide");
-    infoTable.classList.add("viewHide");
+// Build chord dictionary via formulas (covers a LOT; you can extend easily)
+const CHORD_QUALITIES = [
+  { id:"maj",  label:"Major",  aliases:["","M","maj"],  degrees:["1","3","5"], intervals:[0,4,7]},
+  { id:"min",  label:"Minor",  aliases:["m","min","-"], degrees:["1","♭3","5"], intervals:[0,3,7]},
+  { id:"dim",  label:"Diminished", aliases:["dim","o"], degrees:["1","♭3","♭5"], intervals:[0,3,6]},
+  { id:"aug",  label:"Augmented", aliases:["aug","+"], degrees:["1","3","♯5"], intervals:[0,4,8]},
+
+  { id:"7",    label:"Dominant 7", aliases:["7"], degrees:["1","3","5","♭7"], intervals:[0,4,7,10]},
+  { id:"maj7", label:"Major 7", aliases:["maj7","M7","Δ7"], degrees:["1","3","5","7"], intervals:[0,4,7,11]},
+  { id:"m7",   label:"Minor 7", aliases:["m7","min7","-7"], degrees:["1","♭3","5","♭7"], intervals:[0,3,7,10]},
+  { id:"mMaj7",label:"Minor Maj7", aliases:["mMaj7","mM7","-Δ7"], degrees:["1","♭3","5","7"], intervals:[0,3,7,11]},
+  { id:"dim7", label:"Diminished 7", aliases:["dim7","o7"], degrees:["1","♭3","♭5","𝄫7"], intervals:[0,3,6,9]},
+  { id:"m7b5", label:"Half diminished", aliases:["m7b5","ø","half diminished","half-diminished","min7b5"], degrees:["1","♭3","♭5","♭7"], intervals:[0,3,6,10]},
+
+  { id:"6",    label:"6", aliases:["6"], degrees:["1","3","5","6"], intervals:[0,4,7,9]},
+  { id:"m6",   label:"m6", aliases:["m6","min6"], degrees:["1","♭3","5","6"], intervals:[0,3,7,9]},
+  { id:"9",    label:"9", aliases:["9"], degrees:["1","3","5","♭7","9"], intervals:[0,4,7,10,14]},
+  { id:"maj9", label:"maj9", aliases:["maj9","M9"], degrees:["1","3","5","7","9"], intervals:[0,4,7,11,14]},
+  { id:"m9",   label:"m9", aliases:["m9","min9"], degrees:["1","♭3","5","♭7","9"], intervals:[0,3,7,10,14]},
+  { id:"11",   label:"11", aliases:["11"], degrees:["1","3","5","♭7","9","11"], intervals:[0,4,7,10,14,17]},
+  { id:"13",   label:"13", aliases:["13"], degrees:["1","3","5","♭7","9","13"], intervals:[0,4,7,10,14,21]},
+];
+
+// Quick “legacy” parsing: C/7/5-/5+ , Dm7/9 , Em7/6
+function normalizeLegacy(input){
+  let s = (input||"").trim();
+  if (!s) return "";
+  s = s.replaceAll("♭","b").replaceAll("♯","#");
+  // legacy separators "/"
+  // Examples:
+  // C/7/5-/5+  -> C7(b5,#5)
+  // Dm7/9      -> Dm9
+  // Em7/6      -> Em13? (often m7(add6) ; we map to m6 + b7? We'll map to m7(add6))
+  const m = s.match(/^([A-Ga-g])([#b]?)(.*)$/);
+  if(!m) return s;
+  const root = m[1].toUpperCase()+ (m[2]||"");
+  let rest = (m[3]||"").trim();
+
+  if(rest.includes("/")){
+    const parts = rest.split("/").filter(Boolean);
+    // first token can be like "m7" or "7" or "m"
+    let base = parts.shift() || "";
+    // if base is just "m" -> minor triad
+    // keep as is
+    let ext = base;
+
+    // handle cases like m7/9 -> m9
+    if (parts.length===1 && parts[0]==="9" && /m7$/.test(ext)) ext = ext.replace(/m7$/,"m9");
+    if (parts.length===1 && parts[0]==="9" && /7$/.test(ext) && !/maj7/.test(ext)) ext = ext.replace(/7$/,"9");
+
+    // collect alterations
+    const alts = [];
+    for(const p of parts){
+      if (p==="5-") alts.push("b5");
+      else if (p==="5+") alts.push("#5");
+      else if (p==="9-") alts.push("b9");
+      else if (p==="9+") alts.push("#9");
+      else if (p==="11+") alts.push("#11");
+      else if (p==="13-") alts.push("b13");
+      else if (p==="6" && /m7$/.test(ext)) {
+        // Em7/6 -> Em7(add6)
+        alts.push("add6");
+      } else {
+        // fallback: keep token
+        alts.push(p);
+      }
+    }
+    if(alts.length){
+      // represent in a modern readable way
+      // prefer parentheses for alterations
+      if(alts.includes("add6")){
+        ext = ext + "(add6)";
+      } else {
+        ext = ext + "(" + alts.join(",") + ")";
+      }
+    }
+    return root + ext;
+  }
+  return root + rest;
+}
+
+// Parse user input into {rootPc, preferFlats, qualityId, customIntervals?, legacyName, modernName}
+function parseChordInput(raw){
+  const legacyName = (raw||"").trim();
+  if(!legacyName) return null;
+
+  const modern = normalizeLegacy(legacyName);
+
+  // Support: "B half diminished"
+  const lower = modern.toLowerCase();
+  if(lower.includes("half diminished")){
+    // e.g. "B half diminished" => Bm7b5
+    const r = modern.split(/\s+/)[0];
+    return parseChordInput(r+"m7b5");
+  }
+
+  // root
+  const m = modern.match(/^([A-G])([#b]?)(.*)$/);
+  if(!m) return null;
+  const rootName = m[1] + (m[2]||"");
+  let rest = (m[3]||"").trim();
+
+  let preferFlats = rest.includes("b") || rootName.includes("b");
+
+  // quality detection by aliases (longest first)
+  let matchedQuality = null;
+  let matchedAlias = "";
+  const allAliases = [];
+  for(const q of CHORD_QUALITIES){
+    for(const a of q.aliases){
+      if(a==="") continue;
+      allAliases.push({q, a});
+    }
+  }
+  allAliases.sort((x,y)=>y.a.length-x.a.length);
+
+  // Special cases first: m7b5 tokens, ø, etc
+  if(rest.startsWith("ø")) { matchedQuality = CHORD_QUALITIES.find(x=>x.id==="m7b5"); matchedAlias="ø"; rest = rest.slice(1).trim(); }
+  if(!matchedQuality){
+    // try direct known patterns
+    for(const {q,a} of allAliases){
+      if(rest.toLowerCase().startsWith(a.toLowerCase())){
+        matchedQuality=q;
+        matchedAlias=a;
+        rest = rest.slice(a.length).trim();
+        break;
+      }
+    }
+  }
+  // default triad if none
+  if(!matchedQuality){
+    // if rest starts with "m" -> minor, else major
+    if(rest.startsWith("m") || rest.startsWith("-")){
+      matchedQuality = CHORD_QUALITIES.find(x=>x.id==="min");
+      rest = rest.slice(1).trim();
+    } else {
+      matchedQuality = CHORD_QUALITIES.find(x=>x.id==="maj");
+    }
+  }
+
+  // Apply alterations in parentheses like (b5,#5) or (add6)
+  let intervals = [...matchedQuality.intervals];
+  let degrees = [...matchedQuality.degrees];
+  const altMatch = modern.match(/\(([^)]+)\)/);
+  if(altMatch){
+    const alts = altMatch[1].split(",").map(s=>s.trim().toLowerCase());
+    for(const a of alts){
+      if(a==="b5"){
+        // change 5 from 7 to 6
+        const idx = intervals.indexOf(7);
+        if(idx>=0) intervals[idx]=6;
+      }
+      if(a==="#5"){
+        const idx = intervals.indexOf(7);
+        if(idx>=0) intervals[idx]=8;
+      }
+      if(a==="add6"){
+        if(!intervals.includes(9)) intervals.push(9);
+      }
+    }
+    intervals.sort((x,y)=>x-y);
+  }
+
+  const rootPc = pcFromNoteName(rootName);
+  if(rootPc===null) return null;
+
+  // Compute modern standardized name
+  const baseName = pretty(nameFromPc(rootPc, preferFlats));
+  let qualName = matchedQuality.aliases[0] || matchedQuality.id; // not perfect but ok
+  // Build a cleaner modern suffix:
+  const cleanMap = {
+    "maj":"", "min":"m", "dim":"dim", "aug":"aug",
+    "7":"7","maj7":"maj7","m7":"m7","mMaj7":"mMaj7","dim7":"dim7","m7b5":"m7b5",
+    "6":"6","m6":"m6","9":"9","maj9":"maj9","m9":"m9","11":"11","13":"13"
+  };
+  let suffix = cleanMap[matchedQuality.id] ?? matchedQuality.id;
+
+  // Keep alterations if exist
+  let modernName = baseName + suffix;
+  if(altMatch){
+    modernName += "(" + altMatch[1] + ")";
+  }
+
+  return {
+    rootPc, preferFlats,
+    qualityId: matchedQuality.id,
+    qualityLabel: matchedQuality.label,
+    intervals, degrees,
+    legacyName,
+    modernName
+  };
+}
+
+function chordNotesFromParsed(parsed){
+  const pcs = parsed.intervals.map(iv => (parsed.rootPc + (iv%12) + 12) % 12);
+  // keep unique
+  return [...new Set(pcs)];
+}
+
+// Inversion: rotate notes up by octaves (we keep pcs but order changes for playback)
+function invertedMidiNotes(parsed, baseMidi=48, inv=0){
+  const pcs = chordNotesFromParsed(parsed);
+  // build a sorted pitch list near base
+  let notes = pcs.slice().sort((a,b)=>a-b).map(pc=>{
+    // map pc near baseMidi
+    const basePc = baseMidi%12;
+    let midi = baseMidi + ((pc - basePc + 12) % 12);
+    return midi;
+  });
+  // ensure ascending
+  notes.sort((a,b)=>a-b);
+
+  // apply inversion by moving lowest notes up an octave
+  for(let i=0;i<inv;i++){
+    if(notes.length===0) break;
+    const n = notes.shift();
+    notes.push(n+12);
+    notes.sort((a,b)=>a-b);
+  }
+  return notes;
+}
+
+// Find chords matching selected pcs (simple subset match)
+function findMatchingChords(selectedPcs, rootPcHint=null){
+  const set = new Set(selectedPcs);
+  const results = [];
+
+  for(let root=0; root<12; root++){
+    if(rootPcHint!==null && root !== rootPcHint) continue;
+
+    for(const q of CHORD_QUALITIES){
+      const pcs = q.intervals.map(iv => (root + (iv%12))%12);
+      const chordSet = new Set(pcs);
+
+      // match if selected subset of chord (or equal)
+      let ok = true;
+      for(const spc of set){
+        if(!chordSet.has(spc)){ ok=false; break; }
+      }
+      if(!ok) continue;
+
+      // score: prefer tighter matches (more notes matched)
+      const score = set.size / chordSet.size;
+      results.push({
+        rootPc: root,
+        qualityId: q.id,
+        qualityLabel: q.label,
+        intervals: q.intervals,
+        degrees: q.degrees,
+        score
+      });
+    }
+  }
+
+  results.sort((a,b)=> (b.score-a.score) || (a.intervals.length-b.intervals.length));
+  return results.slice(0, 40);
+}
+
+function buildChordName(rootPc, preferFlats, qualityId){
+  const base = pretty(nameFromPc(rootPc, preferFlats));
+  const map = {
+    "maj":"", "min":"m", "dim":"dim", "aug":"aug",
+    "7":"7","maj7":"maj7","m7":"m7","mMaj7":"mMaj7","dim7":"dim7","m7b5":"m7b5",
+    "6":"6","m6":"m6","9":"9","maj9":"maj9","m9":"m9","11":"11","13":"13"
+  };
+  return base + (map[qualityId] ?? qualityId);
+}
+
+/* =========================
+   AUDIO (WebAudio)
+========================= */
+let audioCtx = null;
+function ensureAudio(){
+  if(!audioCtx){
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if(audioCtx.state === "suspended") audioCtx.resume();
+  return audioCtx;
+}
+
+function playTone(midi, when=0, dur=0.6){
+  const ctx = ensureAudio();
+  const t0 = ctx.currentTime + when;
+
+  const freq = 440 * Math.pow(2, (midi-69)/12);
+
+  // simple piano-ish: sine + triangle + quick attack
+  const o1 = ctx.createOscillator();
+  const o2 = ctx.createOscillator();
+  o1.type = "sine";
+  o2.type = "triangle";
+  o1.frequency.value = freq;
+  o2.frequency.value = freq;
+
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(0.35, t0 + 0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+
+  // mild lowpass
+  const f = ctx.createBiquadFilter();
+  f.type = "lowpass";
+  f.frequency.setValueAtTime(4200, t0);
+
+  o1.connect(f);
+  o2.connect(f);
+  f.connect(g);
+  g.connect(ctx.destination);
+
+  o1.start(t0); o2.start(t0);
+  o1.stop(t0+dur+0.05); o2.stop(t0+dur+0.05);
+}
+
+function playChordMidis(midis, mode){
+  if(!midis.length) return;
+  if(mode==="once"){
+    midis.forEach((m,i)=>playTone(m, i*0.0, 0.65));
+  }else if(mode==="asc"){
+    midis.slice().sort((a,b)=>a-b).forEach((m,i)=>playTone(m, i*0.12, 0.6));
   }else{
-    staffBox.classList.remove("viewHide");
-    infoTable.classList.remove("viewHide");
+    midis.slice().sort((a,b)=>b-a).forEach((m,i)=>playTone(m, i*0.12, 0.6));
   }
 }
 
-/* ================= Root rails (left + right) ================= */
-function buildRootScroll(){
-  const cont=$("rootScroll");
-  cont.innerHTML="";
-  ROOTS_RAIL.forEach((r,idx)=>{
-    const b=document.createElement("button");
-    b.textContent=r;
-    b.classList.toggle("active", idx===state.railRootIndex);
-    bindTap(b, ()=>{
-      state.railRootIndex=idx;
-      buildFromRails();
+/* =========================
+   STATE + UI
+========================= */
+const els = {
+  tabs: [...document.querySelectorAll(".tab")],
+  search: document.getElementById("searchInput"),
+  clearBtn: document.getElementById("clearBtn"),
+  rootLabel: document.getElementById("rootLabel"),
+  rootTrack: document.getElementById("rootTrack"),
+  leftList: document.getElementById("leftList"),
+  bigChord: document.getElementById("bigChord"),
+  legacyLine: document.getElementById("legacyLine"),
+  degOut: document.getElementById("degOut"),
+  notesOut: document.getElementById("notesOut"),
+  modeOut: document.getElementById("modeOut"),
+  invBtns: document.getElementById("invBtns"),
+  playMode: document.getElementById("playMode"),
+  playBtn: document.getElementById("playBtn"),
+  kbdInner: document.getElementById("kbdInner"),
+  kbd: document.getElementById("kbd"),
+  toggleFavBtn: document.getElementById("toggleFavBtn"),
+  favBtn: document.getElementById("favBtn"),
+  themeBtn: document.getElementById("themeBtn"),
+  modalBackdrop: document.getElementById("modalBackdrop"),
+  favList: document.getElementById("favList"),
+  favCloseBtn: document.getElementById("favCloseBtn"),
+  favEditBtn: document.getElementById("favEditBtn"),
+  removeAllBtn: document.getElementById("removeAllBtn"),
+  removeSelectedBtn: document.getElementById("removeSelectedBtn"),
+};
+
+let currentTab = "root";
+let selectedRootPc = 0;
+let preferFlats = true;
+let currentParsed = parseChordInput("Cm") || null;
+let inversion = 0;
+let playMode = "once";
+let pianoSelectedPcs = []; // in Piano mode
+let favorites = loadFavorites();
+let favEditMode = false;
+
+function saveFavorites(){
+  localStorage.setItem("chords_favorites_v1", JSON.stringify(favorites));
+}
+function loadFavorites(){
+  try{
+    const s = localStorage.getItem("chords_favorites_v1");
+    if(!s) return [];
+    const arr = JSON.parse(s);
+    if(Array.isArray(arr)) return arr;
+    return [];
+  }catch{ return []; }
+}
+function isFav(modernName){
+  return favorites.some(x=>x.modernName===modernName);
+}
+
+function setTheme(){
+  const theme = document.body.getAttribute("data-theme");
+  document.body.setAttribute("data-theme", theme==="light" ? "dark":"light");
+}
+els.themeBtn.addEventListener("click", setTheme);
+
+function openFavModal(){
+  renderFavorites();
+  els.modalBackdrop.style.display = "flex";
+}
+function closeFavModal(){
+  els.modalBackdrop.style.display = "none";
+  favEditMode = false;
+  els.favEditBtn.textContent = "Edit";
+  els.removeSelectedBtn.style.display = "none";
+  renderFavorites();
+}
+els.favBtn.addEventListener("click", openFavModal);
+els.favCloseBtn.addEventListener("click", closeFavModal);
+els.modalBackdrop.addEventListener("click", (e)=>{
+  if(e.target === els.modalBackdrop) closeFavModal();
+});
+els.favEditBtn.addEventListener("click", ()=>{
+  favEditMode = !favEditMode;
+  els.favEditBtn.textContent = favEditMode ? "Done" : "Edit";
+  els.removeSelectedBtn.style.display = favEditMode ? "inline-block" : "none";
+  renderFavorites();
+});
+els.removeAllBtn.addEventListener("click", ()=>{
+  favorites = [];
+  saveFavorites();
+  renderFavorites();
+  renderFavButton();
+});
+els.removeSelectedBtn.addEventListener("click", ()=>{
+  const checks = [...els.favList.querySelectorAll("input[type=checkbox]:checked")];
+  const toRemove = new Set(checks.map(c=>c.value));
+  favorites = favorites.filter(f=>!toRemove.has(f.modernName));
+  saveFavorites();
+  renderFavorites();
+  renderFavButton();
+});
+
+function renderFavorites(){
+  els.favList.innerHTML = "";
+  if(!favorites.length){
+    els.favList.innerHTML = `<div class="tiny">No favorites yet. Tap ★ Favorite on a chord.</div>`;
+    return;
+  }
+  for(const f of favorites){
+    const div = document.createElement("div");
+    div.className = "favRow";
+    div.innerHTML = `
+      <div style="display:flex; align-items:center; gap:10px;">
+        ${favEditMode ? `<input class="chk" type="checkbox" value="${f.modernName}">` : ``}
+        <div>
+          <div style="font-weight:1000">${f.modernName}</div>
+          <div class="tiny">Legacy: ${f.legacyName || f.modernName}</div>
+        </div>
+      </div>
+      <button class="btn">Open</button>
+    `;
+    div.querySelector("button").addEventListener("click", ()=>{
+      applyChord(parseChordInput(f.modernName) || parseChordInput(f.legacyName));
+      closeFavModal();
     });
-    cont.appendChild(b);
-  });
+    els.favList.appendChild(div);
+  }
 }
-function buildRightRootScroll(){
-  const cont=$("rightRootScroll");
-  cont.innerHTML="";
-  ROOTS_RAIL.forEach((r,idx)=>{
-    const b=document.createElement("button");
-    b.textContent=r;
-    b.classList.toggle("active", idx===state.railRootIndex);
-    bindTap(b, ()=>{
-      state.railRootIndex=idx;
-      buildFromRails();
-      // keep active in view
-      try{ b.scrollIntoView({behavior:"smooth", inline:"center", block:"nearest"}); }catch{}
+
+function renderFavButton(){
+  if(!currentParsed){
+    els.toggleFavBtn.textContent = "★ Favorite";
+    return;
+  }
+  els.toggleFavBtn.textContent = isFav(currentParsed.modernName) ? "★ Favorited" : "★ Favorite";
+}
+
+els.toggleFavBtn.addEventListener("click", ()=>{
+  if(!currentParsed) return;
+  const exists = isFav(currentParsed.modernName);
+  if(exists){
+    favorites = favorites.filter(x=>x.modernName !== currentParsed.modernName);
+  }else{
+    favorites.unshift({
+      modernName: currentParsed.modernName,
+      legacyName: currentParsed.legacyName
     });
-    cont.appendChild(b);
-  });
-  // keep current in view
-  const active=cont.querySelector("button.active");
-  if(active){ try{ active.scrollIntoView({behavior:"auto", inline:"center", block:"nearest"});}catch{} }
+  }
+  saveFavorites();
+  renderFavButton();
+});
+
+/* Root scroller */
+function renderRootTrack(){
+  els.rootTrack.innerHTML="";
+  for(let pc=0; pc<12; pc++){
+    const btn = document.createElement("div");
+    btn.className="rootItem" + (pc===selectedRootPc ? " active":"");
+    btn.textContent = pretty(nameFromPc(pc, true)); // show flats in slider like screenshot (Db, Eb...)
+    btn.addEventListener("click", ()=>{
+      selectedRootPc = pc;
+      els.rootLabel.textContent = pretty(nameFromPc(pc,true));
+      renderRootTrack();
+      if(currentTab==="root"){
+        renderChordListForRoot();
+      }else{
+        // in piano tab, hint root to matcher
+        renderPianoMatchList();
+      }
+    });
+    els.rootTrack.appendChild(btn);
+  }
 }
-function renderRails(){
-  $("qualRail").innerHTML = `<span class="mut"> </span><span>${QUALS[state.railQualIndex].label}</span><span class="mut"> </span>`;
-  buildRootScroll();
-  buildRightRootScroll();
+
+/* Left list rendering */
+function renderChordListForRoot(query=""){
+  els.leftList.innerHTML = "";
+  const prefer = true; // show flats in UI
+  const rows = [];
+
+  // Build a rich list for the chosen root
+  for(const q of CHORD_QUALITIES){
+    const name = buildChordName(selectedRootPc, prefer, q.id);
+    rows.push({
+      modernName:name,
+      legacyName:name,
+      parsed:{
+        rootPc:selectedRootPc,
+        preferFlats:prefer,
+        qualityId:q.id,
+        qualityLabel:q.label,
+        intervals:q.intervals,
+        degrees:q.degrees,
+        legacyName:name,
+        modernName:name
+      }
+    });
+  }
+
+  let filtered = rows;
+  const q = (query||"").trim().toLowerCase();
+  if(q){
+    filtered = rows.filter(r=>r.modernName.toLowerCase().includes(q) || (r.legacyName||"").toLowerCase().includes(q));
+  }
+
+  for(const r of filtered){
+    const div = document.createElement("div");
+    div.className = "row" + (currentParsed && currentParsed.modernName===r.parsed.modernName ? " active":"");
+    div.innerHTML = `
+      <div>
+        <div class="name">${r.modernName}</div>
+        <div class="sub">${r.parsed.qualityLabel}</div>
+      </div>
+      <div class="miniKeys"></div>
+    `;
+    // mini marks
+    const pcs = chordNotesFromParsed(r.parsed);
+    const mk = div.querySelector(".miniKeys");
+    pcs.forEach((pc)=>{
+      // simple mapping into bar
+      const x = (pc/12)*120 + 5;
+      const m = document.createElement("div");
+      m.className="miniMark";
+      m.style.left = `${x}px`;
+      m.style.height = `${18 + (pc%3)*4}px`;
+      mk.appendChild(m);
+    });
+
+    div.addEventListener("click", ()=>{
+      applyChord(r.parsed);
+      // on iPad: remove keyboard focus
+      els.search.blur();
+    });
+    els.leftList.appendChild(div);
+  }
 }
-function buildFromRails(){
-  const root=ROOTS_RAIL[state.railRootIndex];
-  const qual=QUALS[state.railQualIndex].value;
-  const q=root+qual;
-  $("searchInput").value=q;
-  updateSearchClearUI();
-  search(q);
+
+function renderPianoMatchList(){
+  // in piano mode, left list shows matching chords to selected pcs
+  els.leftList.innerHTML = "";
+  if(pianoSelectedPcs.length===0){
+    els.leftList.innerHTML = `<div class="tiny">Tap piano keys to select notes. Matching chords will appear here.</div>`;
+    return;
+  }
+  const matches = findMatchingChords(pianoSelectedPcs, selectedRootPc);
+  if(!matches.length){
+    els.leftList.innerHTML = `<div class="tiny">No matches found.</div>`;
+    return;
+  }
+  for(const m of matches){
+    const modernName = buildChordName(m.rootPc, true, m.qualityId);
+    const parsed = {
+      rootPc:m.rootPc, preferFlats:true,
+      qualityId:m.qualityId, qualityLabel:m.qualityLabel,
+      intervals:m.intervals, degrees:m.degrees,
+      legacyName:modernName, modernName
+    };
+    const div = document.createElement("div");
+    div.className = "row" + (currentParsed && currentParsed.modernName===modernName ? " active":"");
+    div.innerHTML = `
+      <div>
+        <div class="name">${modernName}</div>
+        <div class="sub">${m.qualityLabel} · match ${Math.round(m.score*100)}%</div>
+      </div>
+      <div class="miniKeys"></div>
+    `;
+    const mk = div.querySelector(".miniKeys");
+    chordNotesFromParsed(parsed).forEach((pc)=>{
+      const x = (pc/12)*120 + 5;
+      const mm = document.createElement("div");
+      mm.className="miniMark";
+      mm.style.left = `${x}px`;
+      mm.style.height = `${18 + (pc%3)*4}px`;
+      mk.appendChild(mm);
+    });
+    div.addEventListener("click", ()=>{
+      applyChord(parsed);
+      els.search.blur();
+    });
+    els.leftList.appendChild(div);
+  }
 }
 
-/* ================= Search & Render (Chord mode) ================= */
-function search(raw){
-  setErr(null);
-
-  const p=parseChord(raw);
-  if(p.error){ setErr(p.error); return; }
-
-  const ch=buildChord(p);
-  state.parsed=p;
-  state.chord=ch;
-  state.inversions=inversionsFromPcs(ch.pcs);
-
-  state.invIndex=Math.max(0, Math.min(state.invIndex, state.inversions.length-1));
-
-  state.modern=ch.modernName;
-  const looksLegacy = raw.includes("/") && /\/(7|6|9|11|13|5[+-]|9[+-]|11[+-]|13[+-])/.test(raw.replace(/\s+/g,""));
-  state.legacy = looksLegacy ? raw : modernToLegacy(ch.modernName);
-  state.preferFlats=p.preferFlats;
-
-  $("rightTitle").textContent=state.modern;
-  $("legacyLine").textContent=`Legacy: ${state.legacy}   |   Modern: ${state.modern}`;
-  $("leftRootBig").textContent=p.root;
-
-  syncRailsFromCurrent();
+/* Apply chord to right panel + keyboard */
+function applyChord(parsed){
+  if(!parsed) return;
+  currentParsed = parsed;
+  inversion = 0;
+  setInvButtons();
   renderRight();
-  renderLeftList();
+  renderChordKeyboard();
+  renderChordListForRoot(els.search.value || "");
+  renderFavButton();
 }
 
-function syncRailsFromCurrent(){
-  const p=state.parsed; if(!p) return;
-
-  const prefer = state.legacy.startsWith("Db")?"Db":
-                 state.legacy.startsWith("Eb")?"Eb":
-                 state.legacy.startsWith("Gb")?"Gb":
-                 state.legacy.startsWith("Ab")?"Ab":
-                 state.legacy.startsWith("Bb")?"Bb": p.root;
-
-  const idx=ROOTS_RAIL.indexOf(prefer);
-  if(idx>=0) state.railRootIndex=idx;
-
-  renderRails();
+function setInvButtons(){
+  [...els.invBtns.querySelectorAll("button")].forEach(b=>{
+    b.classList.toggle("active", Number(b.dataset.inv)===inversion);
+  });
 }
+els.invBtns.addEventListener("click",(e)=>{
+  const b = e.target.closest("button");
+  if(!b) return;
+  inversion = Number(b.dataset.inv);
+  setInvButtons();
+  renderRight();
+  renderChordKeyboard();
+});
+
+els.playMode.addEventListener("click",(e)=>{
+  const b = e.target.closest("button");
+  if(!b) return;
+  playMode = b.dataset.play;
+  [...els.playMode.querySelectorAll("button")].forEach(x=>x.classList.toggle("active", x===b));
+});
+
+els.playBtn.addEventListener("click", ()=>{
+  if(!currentParsed) return;
+  const midis = invertedMidiNotes(currentParsed, 48, inversion);
+  playChordMidis(midis, playMode);
+});
 
 function renderRight(){
-  if(state.viewTab==="piano"){
-    renderPianoMode();
-    applyView();
-    return;
-  }
-
-  const p=state.parsed, ch=state.chord;
-  if(!p||!ch) return;
-
-  const invPcs = state.inversions[state.invIndex] || ch.pcs;
-
-  $("degText").textContent=degreesFromIntervals(ch.ints);
-  $("noteText").textContent=invPcs.slice().sort((a,b)=>a-b).map(pc=>pcName(pc,state.preferFlats)).join(", ");
-
-  // RIGHT inversions seg — TOUCH SAFE
-  const invSeg=$("rightInvSeg");
-  invSeg.innerHTML="";
-  state.inversions.forEach((_,idx)=>{
-    const b=document.createElement("button");
-    b.textContent=invLabel(idx);
-    b.classList.toggle("active", idx===state.invIndex);
-    bindTap(b, ()=>{
-      state.invIndex=idx;
-      renderRight();
-      renderLeftList();
-    });
-    invSeg.appendChild(b);
-  });
-
-  renderStaff($("staffSvg"), invPcs, state.preferFlats);
-
-  $("kbdMain").innerHTML = buildKeyboardSVG({
-    highlightPcs: invPcs,
-    preferFlats: state.preferFlats,
-    startOct: state.rangeStart,
-    endOct: state.rangeEnd,
-    interactive: false,
-    showBubbles: true
-  });
-
-  const fav=loadArr(KEY_FAV);
-  $("favBtn").textContent = fav.includes(state.legacy) ? "★" : "☆";
-
-  applyView();
+  if(!currentParsed) return;
+  els.bigChord.textContent = currentParsed.modernName;
+  els.legacyLine.textContent = `Legacy: ${currentParsed.legacyName} | Modern: ${currentParsed.modernName}`;
+  els.degOut.textContent = currentParsed.degrees.join(", ");
+  // show note names
+  const pcs = chordNotesFromParsed(currentParsed);
+  const notes = pcs.map(pc => pretty(nameFromPc(pc, true)));
+  els.notesOut.textContent = notes.join(", ");
+  els.modeOut.textContent = currentParsed.qualityLabel;
 }
 
-/* ================= LEFT list ================= */
-function renderLeftList(){
-  const list=$("chordList");
-  const q=($("searchInput").value||"").trim().toLowerCase();
-  const fav=loadArr(KEY_FAV);
-  list.innerHTML="";
-
-  if(state.viewTab==="piano"){
-    const key = [...state.pianoSelected].sort((a,b)=>a-b).join(",");
-    const matches = (CHORD_LOOKUP.get(key) || []).slice(0, 80);
-    const filtered = matches.filter(x => !q || x.name.toLowerCase().includes(q) || modernToLegacy(x.name).toLowerCase().includes(q));
-
-    if(!state.pianoSelected.size){
-      const empty=document.createElement("div");
-      empty.style.padding="12px";
-      empty.style.color="var(--mut)";
-      empty.style.fontWeight="900";
-      empty.textContent="Tap keys to select notes — matches will appear here.";
-      list.appendChild(empty);
-      return;
-    }
-
-    if(!filtered.length){
-      const empty=document.createElement("div");
-      empty.style.padding="12px";
-      empty.style.color="var(--mut)";
-      empty.style.fontWeight="900";
-      empty.textContent="No exact chord match for the selected notes (try adding/removing a note).";
-      list.appendChild(empty);
-      return;
-    }
-
-    filtered.forEach(x=>{
-      const div=document.createElement("div");
-      div.className="item";
-      bindTap(div, ()=>{
-        state.viewTab="root";
-        setTabUI("root");
-        state.invIndex=0;
-
-        $("searchInput").value = x.name;
-        updateSearchClearUI();
-        search(x.name);
-        $("searchInput").blur();
-      });
-
-      const nameBox=document.createElement("div");
-      const legacy=modernToLegacy(x.name);
-      const star = fav.includes(legacy) ? "★" : "☆";
-      nameBox.innerHTML=`<div class="name">${x.name}</div><div class="sub">Legacy: ${legacy} &nbsp; ${star}</div>`;
-
-      const mini=document.createElement("div");
-      mini.className="miniKbd";
-      const p=parseChord(x.name); if(!p.error){
-        const ch=buildChord(p);
-        const invPcs=inversionsFromPcs(ch.pcs)[0];
-        mini.innerHTML = buildKeyboardSVG({
-          highlightPcs: invPcs,
-          preferFlats: p.preferFlats,
-          startOct: 3,
-          endOct: 4,
-          interactive:false,
-          showBubbles:false
-        });
-      }
-
-      div.appendChild(nameBox);
-      div.appendChild(mini);
-      list.appendChild(div);
-    });
-
-    $("favFilterBtn").textContent = state.favFilter ? "All" : "Show ★";
-    return;
-  }
-
-  const root = state.parsed?.root || ROOTS_RAIL[state.railRootIndex] || "C";
-  const items = QUALS.map(x => (root + x.value));
-
-  items
-    .filter(name => !q || name.toLowerCase().includes(q) || modernToLegacy(name).toLowerCase().includes(q) || normalizeWordSearch(name).toLowerCase().includes(q))
-    .filter(name => {
-      if(!state.favFilter) return true;
-      const p=parseChord(name); if(p.error) return false;
-      const ch=buildChord(p);
-      const legacy=modernToLegacy(ch.modernName);
-      return fav.includes(legacy);
-    })
-    .forEach(name=>{
-      const p=parseChord(name); if(p.error) return;
-      const ch=buildChord(p);
-
-      const invs=inversionsFromPcs(ch.pcs);
-      const invPcs=invs[state.leftInv] || invs[0];
-
-      const div=document.createElement("div");
-      div.className="item"+((state.modern===ch.modernName && state.viewTab!=="piano")?" active":"");
-      bindTap(div, ()=>{
-        state.viewTab="root";
-        setTabUI("root");
-        state.invIndex=0;
-
-        $("searchInput").value=name;
-        updateSearchClearUI();
-        search(name);
-        $("searchInput").blur();
-      });
-
-      const nameBox=document.createElement("div");
-      const legacy=modernToLegacy(ch.modernName);
-      const star = fav.includes(legacy) ? "★" : "☆";
-      nameBox.innerHTML=`<div class="name">${ch.modernName}</div><div class="sub">Legacy: ${legacy} &nbsp; ${star}</div>`;
-
-      const mini=document.createElement("div");
-      mini.className="miniKbd";
-      mini.innerHTML = buildKeyboardSVG({
-        highlightPcs: invPcs,
-        preferFlats: p.preferFlats,
-        startOct: 3,
-        endOct: 4,
-        interactive:false,
-        showBubbles:false
-      });
-
-      div.appendChild(nameBox);
-      div.appendChild(mini);
-      list.appendChild(div);
-    });
-
-  $("favFilterBtn").textContent = state.favFilter ? "All" : "Show ★";
-}
-
-/* ================= Piano mode ================= */
-function renderPianoMode(){
-  const key = [...state.pianoSelected].sort((a,b)=>a-b).join(",");
-  const matches = (CHORD_LOOKUP.get(key) || []).map(x=>x.name);
-
-  if(matches.length){
-    $("rightTitle").textContent = matches[0];
-    $("legacyLine").textContent = `Detected: ${matches.slice(0,4).join("  •  ")}`;
+/* Tabs */
+function setTab(t){
+  currentTab = t;
+  els.tabs.forEach(x=>x.classList.toggle("active", x.dataset.tab===t));
+  if(t==="root"){
+    document.getElementById("rootScroller").style.display = "";
+    renderChordListForRoot(els.search.value||"");
+    els.leftHint.textContent = "Type + Enter to search";
+  }else if(t==="piano"){
+    document.getElementById("rootScroller").style.display = "";
+    renderPianoMatchList();
+    els.leftHint.textContent = "Tap keys to detect chords";
   }else{
-    const notes = [...state.pianoSelected].sort((a,b)=>a-b).map(pc=>pcName(pc,true)).join(", ");
-    $("rightTitle").textContent = "Piano";
-    $("legacyLine").textContent = notes ? `Selected: ${notes}` : "Tap keys to select notes";
+    document.getElementById("rootScroller").style.display = "none";
+    els.leftList.innerHTML = `<div class="tiny">Staff view is a placeholder here. If you want real notation rendering, we can add it next.</div>`;
+  }
+}
+els.tabs.forEach(b=>b.addEventListener("click", ()=>setTab(b.dataset.tab)));
+
+/* Search */
+function doSearch(){
+  const raw = els.search.value.trim();
+  if(!raw){
+    // reset list
+    if(currentTab==="root") renderChordListForRoot("");
+    if(currentTab==="piano") renderPianoMatchList();
+    return;
+  }
+  const parsed = parseChordInput(raw);
+  if(parsed){
+    // sync root scroller
+    selectedRootPc = parsed.rootPc;
+    preferFlats = parsed.preferFlats;
+    els.rootLabel.textContent = pretty(nameFromPc(selectedRootPc, true));
+    renderRootTrack();
+    applyChord(parsed);
+  }else{
+    // fallback: filter list
+    if(currentTab==="root") renderChordListForRoot(raw);
+    if(currentTab==="piano") renderPianoMatchList();
+  }
+}
+els.search.addEventListener("keydown",(e)=>{
+  if(e.key==="Enter"){
+    e.preventDefault();
+    doSearch();
+    // close iPad keyboard
+    els.search.blur();
+  }
+});
+els.search.addEventListener("input", ()=>{
+  if(currentTab==="root") renderChordListForRoot(els.search.value||"");
+  if(currentTab==="piano") renderPianoMatchList();
+});
+els.clearBtn.addEventListener("click", ()=>{
+  els.search.value="";
+  els.search.blur();
+  if(currentTab==="root") renderChordListForRoot("");
+  if(currentTab==="piano") renderPianoMatchList();
+});
+
+/* =========================
+   PIANO RENDER
+========================= */
+const WHITE_ORDER = ["C","D","E","F","G","A","B"];
+const BLACKS = new Set(["C#","D#","F#","G#","A#"]);
+
+function renderChordKeyboard(){
+  // single chord displayed, bubbles avoid collision on black neighbors
+  els.kbdInner.innerHTML = "";
+
+  // Build an 2-octave keyboard: C3..B4 (24 semis) + a bit
+  const startMidi = 48; // C3
+  const keys = [];
+  for(let i=0;i<28;i++){
+    keys.push(startMidi+i);
   }
 
-  $("rightInvSeg").innerHTML = "";
-  $("degText").textContent = "—";
-  $("noteText").textContent = "—";
-
-  $("kbdMain").innerHTML = buildKeyboardSVG({
-    highlightPcs: [],
-    preferFlats: true,
-    startOct: state.rangeStart,
-    endOct: state.rangeEnd,
-    interactive: true,
-    selectedSet: state.pianoSelected,
-    showBubbles: true
+  // white keys positions
+  const whiteMidis = keys.filter(m=>{
+    const name = NOTE_NAMES_SHARP[m%12];
+    return !BLACKS.has(name);
   });
 
-  wireKeyboardInteractions();
-  renderLeftList();
+  const whiteW = 52;
+  const whiteH = 230;
+  const blackW = 34;
+  const blackH = 140;
+
+  const totalW = whiteMidis.length * whiteW;
+  els.kbdInner.style.width = totalW+"px";
+  els.kbdInner.style.height = whiteH+"px";
+
+  const midiToX = new Map();
+  let wIndex=0;
+
+  // draw whites
+  for(const m of keys){
+    const name = NOTE_NAMES_SHARP[m%12];
+    if(BLACKS.has(name)) continue;
+    const x = wIndex*whiteW;
+    midiToX.set(m, x);
+    const k = document.createElement("div");
+    k.className="whiteKey";
+    k.style.left = x+"px";
+    k.style.width = whiteW+"px";
+    k.style.height = whiteH+"px";
+
+    const hit = document.createElement("div");
+    hit.className="keyHit";
+    hit.addEventListener("click", ()=>onKeyPress(m));
+    k.appendChild(hit);
+
+    // octave labels like C4 C5
+    if(name==="C"){
+      const lbl = document.createElement("div");
+      lbl.style.position="absolute";
+      lbl.style.bottom="10px";
+      lbl.style.left="10px";
+      lbl.style.fontWeight="1000";
+      lbl.style.color="rgba(0,0,0,.35)";
+      lbl.textContent = "C"+Math.floor(m/12 - 1);
+      k.appendChild(lbl);
+    }
+
+    els.kbdInner.appendChild(k);
+    wIndex++;
+  }
+
+  // draw blacks
+  wIndex=0;
+  for(const m of keys){
+    const name = NOTE_NAMES_SHARP[m%12];
+    if(BLACKS.has(name)){
+      // black sits between adjacent whites. Find left white midi:
+      // for C# it's after C; D# after D; F# after F; G# after G; A# after A
+      // we can derive by subtracting 1 semitone until white
+      let left = m-1;
+      while(left>=keys[0] && BLACKS.has(NOTE_NAMES_SHARP[left%12])) left--;
+      const leftX = midiToX.get(left);
+      if(leftX===undefined) continue;
+
+      const x = leftX + whiteW - (blackW/2);
+      const k = document.createElement("div");
+      k.className="blackKey";
+      k.style.left = x+"px";
+      k.style.width = blackW+"px";
+      k.style.height = blackH+"px";
+
+      const hit = document.createElement("div");
+      hit.className="keyHit";
+      hit.addEventListener("click", ()=>onKeyPress(m));
+      k.appendChild(hit);
+
+      els.kbdInner.appendChild(k);
+      midiToX.set(m, x + blackW/2);
+    }
+  }
+
+  // bubbles for chord notes
+  if(currentParsed){
+    const midis = invertedMidiNotes(currentParsed, 48, inversion);
+    // place bubbles; if black neighbors collide, stagger Y
+    const used = [];
+    for(const midi of midis){
+      const pc = midi%12;
+      const n = pretty(nameFromPc(pc, true));
+      const sharpName = NOTE_NAMES_SHARP[pc];
+      const isBlack = BLACKS.has(sharpName);
+
+      // find x for that midi by matching pitch class nearest on keyboard
+      // choose a midi in keys with same pc (prefer exact midi if in range)
+      let target = keys.find(x=>x===midi) ?? keys.find(x=>(x%12)===pc) ?? midi;
+      let x = midiToX.get(target);
+      if(x===undefined){
+        // fallback: approximate from first matching white
+        x = 20;
+      }
+
+      const b = document.createElement("div");
+      b.className="bubble";
+      b.textContent = n;
+
+      // collision avoidance: if another bubble too close, offset
+      let y = isBlack ? 58 : 150;
+      for(const u of used){
+        const dx = Math.abs(u.x - x);
+        if(dx < 40){
+          y = u.y - 52; // stack upward
+        }
+      }
+      used.push({x,y});
+
+      b.style.left = (x - 22)+"px";
+      b.style.top = y+"px";
+      els.kbdInner.appendChild(b);
+    }
+  }
+
+  // autoscroll to show chord area center
+  setTimeout(()=>{
+    const bubbles = [...els.kbdInner.querySelectorAll(".bubble")];
+    if(!bubbles.length) return;
+    const xs = bubbles.map(b=>b.getBoundingClientRect().left);
+    const mid = (Math.min(...xs)+Math.max(...xs))/2;
+    // scroll container so mid is near center
+    const rect = els.kbd.getBoundingClientRect();
+    const desired = mid - rect.left - rect.width/2;
+    els.kbd.scrollLeft += desired;
+  }, 60);
 }
 
-function wireKeyboardInteractions(){
-  const svg = $("kbdMain").querySelector("svg");
-  if(!svg) return;
+function onKeyPress(midi){
+  // unlock audio by user gesture
+  ensureAudio();
+  playTone(midi, 0, 0.55);
 
-  const hit = svg.querySelectorAll("[data-pc]");
-  hit.forEach(el=>{
-    el.addEventListener("pointerdown",(e)=>{
-      e.preventDefault();
-      ensureUnlockedByGesture();
-
-      const pc = parseInt(el.getAttribute("data-pc"),10);
-      if(state.pianoSelected.has(pc)) state.pianoSelected.delete(pc);
-      else state.pianoSelected.add(pc);
-
-      playClickNote(pc, state.rangeStart);
-      renderPianoMode();
-    }, {passive:false});
-  });
-}
-
-/* ================= Favorites ================= */
-function toggleFav(){
-  const fav=loadArr(KEY_FAV);
-  const key=state.legacy;
-  if(!key) return;
-  const next = fav.includes(key) ? fav.filter(x=>x!==key) : [key].concat(fav).slice(0,600);
-  saveArr(KEY_FAV,next);
-  $("favBtn").textContent = next.includes(key) ? "★":"☆";
-  renderLeftList();
-}
-function openFavManager(){
-  const back=$("favModalBack");
-  back.classList.add("show");
-  renderFavManagerList();
-}
-function closeFavManager(){
-  $("favModalBack").classList.remove("show");
-}
-function renderFavManagerList(){
-  const list=$("favModalList");
-  const fav=loadArr(KEY_FAV);
-  list.innerHTML="";
-
-  if(!fav.length){
-    const d=document.createElement("div");
-    d.style.color="var(--mut)";
-    d.style.fontWeight="900";
-    d.style.padding="10px 2px";
-    d.textContent="No favorites yet.";
-    list.appendChild(d);
+  if(currentTab!=="piano"){
+    // in root tab we just audition
     return;
   }
 
-  fav.forEach((legacy,i)=>{
-    const modern = legacy.includes("/") ? legacy : legacy; // keep legacy as key
-    const row=document.createElement("div");
-    row.className="favRow";
-    row.innerHTML = `
-      <input type="checkbox" data-idx="${i}"/>
-      <div>
-        <div class="favName">${legacy}</div>
-        <div class="favSub">Tip: search this legacy name to load it</div>
-      </div>
-    `;
-    list.appendChild(row);
-  });
+  const pc = midi%12;
+  const idx = pianoSelectedPcs.indexOf(pc);
+  if(idx>=0) pianoSelectedPcs.splice(idx,1);
+  else pianoSelectedPcs.push(pc);
+
+  // Update left list with matches
+  renderPianoMatchList();
 }
 
-/* ================= Search clear UI ================= */
-function updateSearchClearUI(){
-  const v = ($("searchInput").value||"").trim();
-  $("clearSearchBtn").classList.toggle("show", v.length>0);
-}
+/* =========================
+   INIT
+========================= */
+(function init(){
+  // root scroller start
+  selectedRootPc = 0;
+  els.rootLabel.textContent = "C";
+  renderRootTrack();
 
-/* ================= Misc UI ================= */
-function toggleTheme(){
-  const body=document.body;
-  const dark = body.getAttribute("data-theme")==="dark";
-  body.setAttribute("data-theme", dark ? "light" : "dark");
-  $("themeBtn").textContent = dark ? "☀︎" : "☾";
-}
+  // default chord
+  applyChord(parseChordInput("Cm"));
 
-function setTabUI(tab){
-  $("topTabs").querySelectorAll("button").forEach(x=>x.classList.remove("active"));
-  const btn=[...$("topTabs").querySelectorAll("button")].find(b=>b.dataset.tab===tab);
-  if(btn) btn.classList.add("active");
-  state.viewTab=tab;
-}
+  // initial list
+  renderChordListForRoot("");
 
-/* ================= Init / Events ================= */
-function init(){
-  // iOS audio unlock: first gesture
-  const unlockHandler = ()=>{
-    ensureUnlockedByGesture();
-    window.removeEventListener("pointerdown", unlockHandler, true);
-    window.removeEventListener("touchstart", unlockHandler, true);
-    window.removeEventListener("click", unlockHandler, true);
-  };
-  window.addEventListener("pointerdown", unlockHandler, true);
-  window.addEventListener("touchstart", unlockHandler, true);
-  window.addEventListener("click", unlockHandler, true);
+  // set tab root
+  setTab("root");
 
-  bindTap($("themeBtn"), toggleTheme);
-  bindTap($("favBtn"), toggleFav);
+  // render favorites state
+  renderFavButton();
 
-  bindTap($("favFilterBtn"), ()=>{
-    state.favFilter=!state.favFilter;
-    renderLeftList();
-  });
-
-  bindTap($("manageFavBtn"), openFavManager);
-  bindTap($("favModalClose"), closeFavManager);
-  bindTap($("favModalBack"), (e)=>{
-    if(e.target === $("favModalBack")) closeFavManager();
-  });
-
-  bindTap($("favSelectAll"), ()=>{
-    const checks=[...$("favModalList").querySelectorAll('input[type="checkbox"]')];
-    checks.forEach(c=>c.checked=true);
-  });
-  bindTap($("favRemoveSelected"), ()=>{
-    const fav=loadArr(KEY_FAV);
-    const checks=[...$("favModalList").querySelectorAll('input[type="checkbox"]')];
-    const removeIdx=new Set(checks.filter(c=>c.checked).map(c=>parseInt(c.dataset.idx,10)));
-    const next=fav.filter((_,i)=>!removeIdx.has(i));
-    saveArr(KEY_FAV,next);
-    renderFavManagerList();
-    renderLeftList();
-    // refresh star
-    const nowFav=loadArr(KEY_FAV);
-    $("favBtn").textContent = nowFav.includes(state.legacy) ? "★" : "☆";
-  });
-  bindTap($("favRemoveAll"), ()=>{
-    saveArr(KEY_FAV,[]);
-    renderFavManagerList();
-    renderLeftList();
-    $("favBtn").textContent="☆";
-  });
-
-  // Tabs
-  $("topTabs").querySelectorAll("button").forEach(b=>{
-    bindTap(b, ()=>{
-      setTabUI(b.dataset.tab);
-      renderRight();
-      applyView();
-    });
-  });
-
-  // Search: Enter => search + blur
-  $("searchInput").addEventListener("keydown",(e)=>{
-    if(e.key==="Enter"){
-      const v=$("searchInput").value.trim();
-      if(v){
-        if(state.viewTab==="piano"){
-          state.viewTab="root";
-          setTabUI("root");
-          state.invIndex=0;
-        }
-        search(v);
-      }
-      $("searchInput").blur();
-    }
-  });
-  $("searchInput").addEventListener("input", ()=>{
-    updateSearchClearUI();
-    renderLeftList();
-  });
-  bindTap($("clearSearchBtn"), ()=>{
-    $("searchInput").value="";
-    updateSearchClearUI();
-    renderLeftList();
-    $("searchInput").focus();
-  });
-
-  // Left inversion segment affects mini list only
-  $("leftInvSeg").querySelectorAll("button").forEach(btn=>{
-    bindTap(btn, ()=>{
-      $("leftInvSeg").querySelectorAll("button").forEach(x=>x.classList.remove("active"));
-      btn.classList.add("active");
-      state.leftInv=parseInt(btn.dataset.inv,10);
-      renderLeftList();
-    });
-  });
-
-  // Root rail arrows
-  bindTap($("rootPrev"), ()=>{ state.railRootIndex=(state.railRootIndex-1+ROOTS_RAIL.length)%ROOTS_RAIL.length; buildFromRails(); });
-  bindTap($("rootNext"), ()=>{ state.railRootIndex=(state.railRootIndex+1)%ROOTS_RAIL.length; buildFromRails(); });
-
-  // Quality arrows
-  bindTap($("qualPrev"), ()=>{ state.railQualIndex=(state.railQualIndex-1+QUALS.length)%QUALS.length; buildFromRails(); });
-  bindTap($("qualNext"), ()=>{ state.railQualIndex=(state.railQualIndex+1)%QUALS.length; buildFromRails(); });
-
-  // Loop toggle
-  bindTap($("loopToggle"), ()=>{ state.loop=!state.loop; $("loopToggle").classList.toggle("on", state.loop); });
-
-  // Arp mode
-  $("arpSeg").querySelectorAll("button").forEach(b=>{
-    bindTap(b, ()=>{
-      $("arpSeg").querySelectorAll("button").forEach(x=>x.classList.remove("active"));
-      b.classList.add("active");
-      state.arp=b.dataset.arp;
-    });
-  });
-
-  // Clear button (Piano mode)
-  bindTap($("clearBtn"), ()=>{
-    ensureUnlockedByGesture();
-    state.pianoSelected.clear();
-    if(state.viewTab==="piano") renderPianoMode();
-    else renderLeftList();
-  });
-
-  // Play button
-  bindTap($("playBtn"), ()=>{
-    ensureUnlockedByGesture();
-    if(state.viewTab==="piano"){
-      const pcs=[...state.pianoSelected];
-      if(!pcs.length) return;
-      playChord(pcs, state.arp, state.rangeStart);
-      return;
-    }
-    if(!state.chord) return;
-    const pcs = state.inversions[state.invIndex] || state.chord.pcs;
-    playChord(pcs, state.arp, state.rangeStart);
-  });
-
-  // Range selects
-  $("rangeStart").onchange=()=>{
-    state.rangeStart=parseInt($("rangeStart").value,10);
-    if(state.rangeEnd <= state.rangeStart) state.rangeEnd = state.rangeStart+1;
-    $("rangeEnd").value=String(state.rangeEnd);
-    renderRight();
-  };
-  $("rangeEnd").onchange=()=>{
-    state.rangeEnd=parseInt($("rangeEnd").value,10);
-    if(state.rangeEnd <= state.rangeStart) state.rangeEnd = state.rangeStart+1;
-    $("rangeEnd").value=String(state.rangeEnd);
-    renderRight();
-  };
-
-  // Default range
-  state.rangeStart=parseInt($("rangeStart").value,10);
-  state.rangeEnd=parseInt($("rangeEnd").value,10);
-
-  renderRails();
-
-  // Start chord
-  $("searchInput").value="Cm";
-  updateSearchClearUI();
-  state.viewTab="root";
-  search("Cm");
-  applyView();
-}
-
-init();
+  // prevent iOS zoom on focus: keep font >= 16px already
+})();
 </script>
 </body>
 </html>
